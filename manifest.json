@@ -1,0 +1,16 @@
+{
+  "name": "531 & 5x5 課表管理系統",
+  "short_name": "531 & 5x5 課表管理",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1e293b",
+  "icons": [
+    {
+      "src": "timetable.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
