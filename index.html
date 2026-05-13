@@ -26,11 +26,14 @@
     .cal-done { background: #e6ffed; color: #28a745; border-left-color: #28a745; text-decoration: line-through; }
     .cal-week-tag { font-size: 8px; color: #495057; display: block; margin-bottom: 1px; font-weight: bold;}
     
-    #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; }
+    /* 修正：把 loader 移到真正的最上層 */
+    #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
     
-    /* 🔒 登入畫面樣式 */
-    #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    /* 修正：登入畫面層級維持 1000，讓預設的 Modal(1055) 能夠浮在它上面 */
+    #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    
+    .option-group { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px;}
   </style>
 </head>
 <body>
@@ -39,12 +42,12 @@
   <div class="login-box">
     <h3 class="mb-4 text-primary fw-bold">531 課表管理系統</h3>
     <p class="text-muted mb-4 small">請輸入系統密碼以存取您的個人課表</p>
-    <input type="password" id="loginPwd" class="form-control form-control-lg mb-3" placeholder="請輸入密碼">
+    <input type="password" id="loginPwd" class="form-control form-control-lg mb-3" placeholder="請輸入密碼" onkeypress="if(event.key === 'Enter') doLogin()">
     <button class="btn btn-primary btn-lg w-100 fw-bold" onclick="doLogin()">登入系統</button>
   </div>
 </div>
 
-<div id="loader"><div class="spinner-border text-primary mb-2"></div><span id="loaderText">處理中...</span></div>
+<div id="loader"><div class="spinner-border text-primary mb-2"></div><span id="loaderText" class="fw-bold text-secondary mt-2">處理中...</span></div>
 
 <div id="mainApp" style="display: none;">
   <nav class="navbar navbar-dark bg-primary sticky-top"><div class="container-fluid"><span class="navbar-brand">531 課表管理系統</span></div></nav>
@@ -140,13 +143,11 @@
     {id: 'Deadlift', name: '硬舉 Deadlift'}, {id: 'BenchPress', name: '臥推 Bench'}
   ];
 
-  // ================= 修改：改用網頁記憶體存放密碼，不用 localStorage =================
   let sessionPwd = '';
 
   // ================= API 核心驅動模組 =================
   async function fetchAPI(action, data = {}) {
     const payload = { action: action, password: sessionPwd, ...data };
-    
     try {
       const res = await fetch(GAS_API_URL, {
         method: 'POST',
@@ -158,49 +159,6 @@
       return result.data;
     } catch (err) {
       throw err;
-    }
-  }
-
-  // ================= 登入與初始化模組 =================
-  window.onload = () => {
-    // 移除自動登入邏輯，每次都必須停留在登入畫面
-    renderSettingsUI();
-    document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-  };
-
-  async function doLogin() {
-    const pwdInput = document.getElementById('loginPwd').value;
-    if(!pwdInput) return showAlert('請輸入密碼');
-    
-    showLoader('驗證中...');
-    sessionPwd = pwdInput; // 將密碼暫存於網頁執行記憶體中
-    
-    try {
-      const s = await fetchAPI('getSettings');
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainApp').style.display = 'block';
-      await initApp(s);
-    } catch(err) {
-      hideLoader();
-      sessionPwd = ''; // 密碼錯誤則清空變數
-      showAlert(err.message);
-    }
-  }
-
-  async function initApp(settingsData) {
-    movements.forEach(m => {
-      document.getElementById(m.id + '_1RM').value = settingsData[m.id + '_1RM'] || 0;
-      document.getElementById(m.id + '_Added').value = settingsData[m.id + '_Added'] || 0;
-    });
-    
-    try {
-      allEvents = await fetchAPI('getAllPrograms');
-      renderCalendar();
-      await loadWorkouts(); 
-    } catch(err) {
-      hideLoader(); 
-      showAlert('資料載入錯誤：' + err.message);
     }
   }
 
@@ -249,56 +207,103 @@
     document.getElementById('settingsContainer').innerHTML = html;
   }
 
-  // ================= 核心功能 (非同步) =================
+  // ================= 登入與加速初始化模組 =================
+  window.onload = () => {
+    renderSettingsUI();
+    document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+  };
+
+  async function doLogin() {
+    const pwdInput = document.getElementById('loginPwd').value;
+    if(!pwdInput) return showAlert('請輸入密碼');
+    
+    // 顯示帶有明確提示的 Loader
+    showLoader('驗證並載入資料中 (約需 2~3 秒)...');
+    sessionPwd = pwdInput; 
+    const targetDate = document.getElementById('targetDate').value;
+    
+    try {
+      // 🚀 關鍵升級：透過三合一 API，一次把全部資料拿回來
+      const initData = await fetchAPI('initLoad', { targetDate: targetDate });
+      
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      
+      // 1. 填入設定資料
+      movements.forEach(m => {
+        document.getElementById(m.id + '_1RM').value = initData.settings[m.id + '_1RM'] || 0;
+        document.getElementById(m.id + '_Added').value = initData.settings[m.id + '_Added'] || 0;
+      });
+      
+      // 2. 繪製月曆
+      allEvents = initData.events;
+      renderCalendar();
+      
+      // 3. 繪製今日課表
+      renderWorkoutsData(initData.workouts, targetDate);
+
+    } catch(err) {
+      hideLoader();
+      sessionPwd = ''; 
+      showAlert(err.message);
+    }
+  }
+
+  // ================= 核心功能 (抽離繪製邏輯) =================
   
+  // 為了讓 initLoad 可以重複利用渲染邏輯，特別將其拆分出來
+  function renderWorkoutsData(data, date) {
+    const list = document.getElementById('workoutList');
+    if (data.length === 0) {
+      list.innerHTML = '<p class="text-center text-muted py-4">今天沒有預定的訓練</p>';
+      hideLoader(); return;
+    }
+
+    let html = `<h6 class="mb-2 pb-2 border-bottom text-primary fw-bold">🏋️ ${data[0].week} 訓練日</h6>`;
+    data.forEach((item, i) => {
+      let isDisabled = item.isLogged === 'V' ? 'disabled style="background-color: #e9ecef;"' : '';
+      html += `
+        <div class="p-3 border-bottom">
+          <div class="d-flex justify-content-between mb-2">
+            <strong class="text-dark">${item.movement}</strong> <span class="badge bg-light text-dark border">${item.set}</span>
+          </div>
+          <div class="d-flex align-items-end">
+            <div class="me-auto" style="min-width: 75px;">
+              <span class="text-muted d-block" style="font-size: 10px; margin-bottom: 2px;">目標 (${item.percent || '-'})</span>
+              <span class="text-primary fw-bold" style="font-size: 14px;">${item.targetWeight}kg x ${item.targetReps}</span>
+            </div>
+            <div class="me-2">
+              <label class="text-muted small">實際重量</label>
+              <input type="number" id="aw-${i}" class="form-control form-control-sm text-center" value="${item.actualWeight}" ${isDisabled}>
+            </div>
+            <div class="me-2">
+              <label class="text-muted small">實際次數</label>
+              <input type="number" id="ar-${i}" class="form-control form-control-sm text-center" value="${item.actualReps.replace('+','')}" ${isDisabled}>
+            </div>
+            <div>
+              ${item.isLogged === 'V' ? '<span class="text-success fw-bold ps-2">✅</span>' : `<button id="btn-${i}" class="btn btn-sm btn-primary px-3" onclick="doLog(${i},${item.rowIdx},'${item.date}','${item.movement}')">OK</button>`}
+            </div>
+          </div>
+        </div>`;
+    });
+
+    html += `
+      <div class="alert alert-secondary p-3 mt-3 mb-0 border-0 rounded-3">
+        <strong class="d-block mb-2 text-dark" style="font-size: 13px;">📅 將本日課表移動至其他日期：</strong>
+        <div class="d-flex"><input type="date" id="newMoveDate" class="form-control form-control-sm me-2" value="${date}">
+        <button class="btn btn-sm btn-outline-primary px-3" onclick="moveSchedule('${date}')">移動</button></div>
+      </div>`;
+    list.innerHTML = html;
+    hideLoader();
+  }
+
   async function loadWorkouts() {
     showLoader('讀取課表中...');
     const date = document.getElementById('targetDate').value;
     try {
       const data = await fetchAPI('getProgramByDate', { targetDate: date });
-      const list = document.getElementById('workoutList');
-      
-      if (data.length === 0) {
-        list.innerHTML = '<p class="text-center text-muted py-4">今天沒有預定的訓練</p>';
-        hideLoader(); return;
-      }
-
-      let html = `<h6 class="mb-2 pb-2 border-bottom text-primary fw-bold">🏋️ ${data[0].week} 訓練日</h6>`;
-      data.forEach((item, i) => {
-        let isDisabled = item.isLogged === 'V' ? 'disabled style="background-color: #e9ecef;"' : '';
-        html += `
-          <div class="p-3 border-bottom">
-            <div class="d-flex justify-content-between mb-2">
-              <strong class="text-dark">${item.movement}</strong> <span class="badge bg-light text-dark border">${item.set}</span>
-            </div>
-            <div class="d-flex align-items-end">
-              <div class="me-auto" style="min-width: 75px;">
-                <span class="text-muted d-block" style="font-size: 10px; margin-bottom: 2px;">目標 (${item.percent || '-'})</span>
-                <span class="text-primary fw-bold" style="font-size: 14px;">${item.targetWeight}kg x ${item.targetReps}</span>
-              </div>
-              <div class="me-2">
-                <label class="text-muted small">實際重量</label>
-                <input type="number" id="aw-${i}" class="form-control form-control-sm text-center" value="${item.actualWeight}" ${isDisabled}>
-              </div>
-              <div class="me-2">
-                <label class="text-muted small">實際次數</label>
-                <input type="number" id="ar-${i}" class="form-control form-control-sm text-center" value="${item.actualReps.replace('+','')}" ${isDisabled}>
-              </div>
-              <div>
-                ${item.isLogged === 'V' ? '<span class="text-success fw-bold ps-2">✅</span>' : `<button id="btn-${i}" class="btn btn-sm btn-primary px-3" onclick="doLog(${i},${item.rowIdx},'${item.date}','${item.movement}')">OK</button>`}
-              </div>
-            </div>
-          </div>`;
-      });
-
-      html += `
-        <div class="alert alert-secondary p-3 mt-3 mb-0 border-0 rounded-3">
-          <strong class="d-block mb-2 text-dark" style="font-size: 13px;">📅 將本日課表移動至其他日期：</strong>
-          <div class="d-flex"><input type="date" id="newMoveDate" class="form-control form-control-sm me-2" value="${date}">
-          <button class="btn btn-sm btn-outline-primary px-3" onclick="moveSchedule('${date}')">移動</button></div>
-        </div>`;
-      list.innerHTML = html;
-      hideLoader();
+      renderWorkoutsData(data, date);
     } catch(err) { hideLoader(); showAlert(err.message); }
   }
 
