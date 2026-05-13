@@ -42,7 +42,7 @@
   <div class="login-box">
     <h3 class="mb-4 text-primary fw-bold">531 課表管理系統</h3>
     <p class="text-muted mb-4 small">請輸入系統密碼以存取您的個人課表</p>
-    <input type="password" id="loginPwd" class="form-control form-control-lg mb-3" placeholder="請輸入密碼" onkeypress="if(event.key === 'Enter') doLogin()">
+    <input type="password" id="loginPwd" class="form-control form-control-lg mb-3" placeholder="請輸入密碼" autocomplete="new-password" data-lpignore="true" onkeypress="if(event.key === 'Enter') doLogin()">
     <button class="btn btn-primary btn-lg w-100 fw-bold" onclick="doLogin()">登入系統</button>
   </div>
 </div>
