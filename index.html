@@ -140,13 +140,14 @@
     {id: 'Deadlift', name: '硬舉 Deadlift'}, {id: 'BenchPress', name: '臥推 Bench'}
   ];
 
+  // ================= 修改：改用網頁記憶體存放密碼，不用 localStorage =================
+  let sessionPwd = '';
+
   // ================= API 核心驅動模組 =================
   async function fetchAPI(action, data = {}) {
-    const pwd = localStorage.getItem('camp531_pwd') || '';
-    const payload = { action: action, password: pwd, ...data };
+    const payload = { action: action, password: sessionPwd, ...data };
     
     try {
-      // 透過 POST 與 text/plain 避免跨域預檢錯誤 (CORS)
       const res = await fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -160,45 +161,32 @@
     }
   }
 
-  // ================= 登入模組 =================
-  async function doLogin() {
-    const pwd = document.getElementById('loginPwd').value;
-    if(!pwd) return alert('請輸入密碼');
-    
-    showLoader('驗證中...');
-    localStorage.setItem('camp531_pwd', pwd); // 暫存密碼測試
-    
-    try {
-      // 嘗試獲取設定以驗證密碼
-      const s = await fetchAPI('getSettings');
-      // 驗證成功
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainApp').style.display = 'block';
-      initApp(s); // 初始化畫面
-    } catch(err) {
-      hideLoader();
-      localStorage.removeItem('camp531_pwd'); // 密碼錯誤則清除
-      alert(err.message);
-    }
-  }
-
-  window.onload = async () => {
-    // 檢查是否有暫存的密碼
-    if(localStorage.getItem('camp531_pwd')) {
-      showLoader('自動登入中...');
-      try {
-        const s = await fetchAPI('getSettings');
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        initApp(s);
-      } catch(e) {
-        hideLoader(); // 密碼過期或錯誤，停留在登入畫面
-      }
-    }
+  // ================= 登入與初始化模組 =================
+  window.onload = () => {
+    // 移除自動登入邏輯，每次都必須停留在登入畫面
     renderSettingsUI();
     document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
   };
+
+  async function doLogin() {
+    const pwdInput = document.getElementById('loginPwd').value;
+    if(!pwdInput) return showAlert('請輸入密碼');
+    
+    showLoader('驗證中...');
+    sessionPwd = pwdInput; // 將密碼暫存於網頁執行記憶體中
+    
+    try {
+      const s = await fetchAPI('getSettings');
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      await initApp(s);
+    } catch(err) {
+      hideLoader();
+      sessionPwd = ''; // 密碼錯誤則清空變數
+      showAlert(err.message);
+    }
+  }
 
   async function initApp(settingsData) {
     movements.forEach(m => {
@@ -209,8 +197,9 @@
     try {
       allEvents = await fetchAPI('getAllPrograms');
       renderCalendar();
-      await loadWorkouts(); // 載入今日課表
+      await loadWorkouts(); 
     } catch(err) {
+      hideLoader(); 
       showAlert('資料載入錯誤：' + err.message);
     }
   }
@@ -260,7 +249,7 @@
     document.getElementById('settingsContainer').innerHTML = html;
   }
 
-  // ================= 核心功能 (非同步重構) =================
+  // ================= 核心功能 (非同步) =================
   
   async function loadWorkouts() {
     showLoader('讀取課表中...');
