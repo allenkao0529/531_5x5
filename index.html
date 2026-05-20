@@ -14,6 +14,7 @@
     :root { --primary-color: #0d6efd; }
     body { background-color: #f4f7f6; padding: 10px 10px 80px 10px; font-family: 'Microsoft JhengHei', -apple-system, sans-serif; font-size: 16px; }
     .content-wrapper { max-width: 600px; margin: 0 auto; }
+    .my-tab { display: block; }
     .card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; }
     .nav-item { text-align: center; color: #888; text-decoration: none; font-size: 12px; flex: 1; }
@@ -54,62 +55,60 @@
 
 <div id="mainApp" style="display: none;">
   <div class="content-wrapper">
-    <div class="tab-content">
-      <div id="tab-log" class="tab-pane fade show active">
-        <div class="card p-3">
-          <input type="date" class="form-control mb-3" id="targetDate" onchange="loadWorkouts()">
-          <div id="workoutList"></div>
-        </div>
+    <div id="tab-log" class="my-tab active">
+      <div class="card p-3">
+        <input type="date" class="form-control mb-3" id="targetDate" onchange="loadWorkouts()">
+        <div id="workoutList"></div>
       </div>
+    </div>
 
-      <div id="tab-cal" class="tab-pane fade" style="display:none;">
-        <div class="card p-2">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 id="calMonthDisplay" class="mb-0"></h6>
-            <div>
-              <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(-1)">‹</button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(1)">›</button>
-            </div>
+    <div id="tab-cal" class="my-tab" style="display:none;">
+      <div class="card p-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 id="calMonthDisplay" class="mb-0"></h6>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(-1)">‹</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(1)">›</button>
           </div>
-          <div class="calendar-grid" id="calendarContainer"></div>
         </div>
+        <div class="calendar-grid" id="calendarContainer"></div>
       </div>
+    </div>
 
-      <div id="tab-gen" class="tab-pane fade" style="display:none;">
-        <div class="card p-3 text-center">
-          <h6 class="mb-3">生成新週期 (4週份)</h6>
-          <div class="text-start bg-light p-2 rounded mb-3">
-            <label class="fw-bold d-block text-primary">設定新週期起始日 (Week 1)</label>
-            <input type="date" class="form-control mt-1" id="startDate">
-          </div>
-          <div class="text-start bg-light p-2 rounded mb-3">
-            <label class="fw-bold d-block text-primary">課表類型選擇</label>
-            <div class="d-flex gap-4 mt-1">
-              <div class="form-check"><input class="form-check-input" type="radio" name="progType" id="prog531" value="531" checked><label class="form-check-label">標準 5/3/1</label></div>
-              <div class="form-check"><input class="form-check-input" type="radio" name="progType" id="prog5x5" value="5x5"><label class="form-check-label">力量 5x5</label></div>
-            </div>
-          </div>
-          <div class="text-start bg-light p-2 rounded mb-3">
-            <label class="fw-bold d-block text-primary">TM 強度計算基底</label>
-            <div class="d-flex gap-4 mt-1">
-              <div class="form-check"><input class="form-check-input" type="radio" name="tmRatio" id="tmLoose" value="0.9" checked><label class="form-check-label">寬鬆版 (90%)</label></div>
-              <div class="form-check"><input class="form-check-input" type="radio" name="tmRatio" id="tmStrict" value="0.95"><label class="form-check-label">嚴格版 (95%)</label></div>
-            </div>
-          </div>
-          <div class="form-check mb-3 text-start">
-            <input class="form-check-input" type="checkbox" id="incCheck">
-            <label class="form-check-label fw-bold" style="color: #d63384;">🔥 下一週期自動累加重量 (上肢2.5kg/下肢5kg)</label>
-          </div>
-          <button class="btn btn-primary w-100 py-2 fw-bold" onclick="generate()">🚀 生成課表並接續存檔</button>
+    <div id="tab-gen" class="my-tab" style="display:none;">
+      <div class="card p-3 text-center">
+        <h6 class="mb-3">生成新週期 (4週份)</h6>
+        <div class="text-start bg-light p-2 rounded mb-3">
+          <label class="fw-bold d-block text-primary">設定新週期起始日 (Week 1)</label>
+          <input type="date" class="form-control mt-1" id="startDate">
         </div>
+        <div class="text-start bg-light p-2 rounded mb-3">
+          <label class="fw-bold d-block text-primary">課表類型選擇</label>
+          <div class="d-flex gap-4 mt-1">
+            <div class="form-check"><input class="form-check-input" type="radio" name="progType" id="prog531" value="531" checked><label class="form-check-label">標準 5/3/1</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="progType" id="prog5x5" value="5x5"><label class="form-check-label">力量 5x5</label></div>
+          </div>
+        </div>
+        <div class="text-start bg-light p-2 rounded mb-3">
+          <label class="fw-bold d-block text-primary">TM 強度計算基底</label>
+          <div class="d-flex gap-4 mt-1">
+            <div class="form-check"><input class="form-check-input" type="radio" name="tmRatio" id="tmLoose" value="0.9" checked><label class="form-check-label">寬鬆版 (90%)</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="tmRatio" id="tmStrict" value="0.95"><label class="form-check-label">嚴格版 (95%)</label></div>
+          </div>
+        </div>
+        <div class="form-check mb-3 text-start">
+          <input class="form-check-input" type="checkbox" id="incCheck">
+          <label class="form-check-label fw-bold" style="color: #d63384;">🔥 下一週期自動累加重量 (上肢2.5kg/下肢5kg)</label>
+        </div>
+        <button class="btn btn-primary w-100 py-2 fw-bold" onclick="generate()">🚀 生成課表並接續存檔</button>
       </div>
+    </div>
 
-      <div id="tab-set" class="tab-pane fade" style="display:none;">
-        <div class="card p-3 bg-light">
-          <h6 class="mb-3 text-secondary text-center">1RM 分離管理面板</h6>
-          <div id="settingsContainer"></div>
-          <button class="btn btn-success w-100 mt-3 py-2 fw-bold" onclick="saveSet()">💾 儲存設定</button>
-        </div>
+    <div id="tab-set" class="my-tab" style="display:none;">
+      <div class="card p-3 bg-light">
+        <h6 class="mb-3 text-secondary text-center">1RM 分離管理面板</h6>
+        <div id="settingsContainer"></div>
+        <button class="btn btn-success w-100 mt-3 py-2 fw-bold" onclick="saveSet()">💾 儲存設定</button>
       </div>
     </div>
   </div>
@@ -189,11 +188,9 @@
 
   function showTab(id, el) {
     ['log','cal','gen','set'].forEach(t => {
-      const el = document.getElementById('tab-'+t);
-      if (el) el.style.display = 'none';
+      const tab = document.getElementById('tab-'+t);
+      if (tab) tab.style.display = (t === id) ? 'block' : 'none';
     });
-    const target = document.getElementById('tab-'+id);
-    if (target) target.style.display = 'block';
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     el.classList.add('active');
     if(id === 'cal') renderCalendar();
