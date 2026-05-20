@@ -298,13 +298,18 @@
     hideLoader();
   }
 
-  async function loadWorkouts() {
+  let loadWorkoutsTimer = null;
+
+  function loadWorkouts() {
     showLoader('讀取課表中...');
-    const date = document.getElementById('targetDate').value;
-    try {
-      const data = await fetchAPI('getProgramByDate', { targetDate: date });
-      renderWorkoutsData(data, date);
-    } catch(err) { hideLoader(); showAlert(err.message); }
+    clearTimeout(loadWorkoutsTimer);
+    loadWorkoutsTimer = setTimeout(async () => {
+      const date = document.getElementById('targetDate').value;
+      try {
+        const data = await fetchAPI('getProgramByDate', { targetDate: date });
+        renderWorkoutsData(data, date);
+      } catch(err) { hideLoader(); showAlert(err.message); }
+    }, 300);
   }
 
   async function executeMove(oldDate, newDate) {
