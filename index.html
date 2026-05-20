@@ -11,24 +11,24 @@
   <!-- 給一般瀏覽器與 Android 辨識的網頁 Icon (Favicon) -->
   <link rel="icon" type="image/png" href="icon-512.png">
   <style>
-    :root { --primary-color: #0d6efd; }
-    body { background-color: #f4f7f6; padding-bottom: 80px; font-family: -apple-system, sans-serif; }
-    .card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
+  :root { --primary-color: #0d6efd; }
+    body { background-color: #f4f7f6; padding-bottom: 80px; font-family: 'Microsoft JhengHei', -apple-system, sans-serif; }
+    .content-wrapper { max-width: 600px; margin: 0 auto; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; }
     .nav-item { text-align: center; color: #888; text-decoration: none; font-size: 12px; flex: 1; }
     .nav-item.active { color: var(--primary-color); font-weight: bold; }
-    
+
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #eee; border: 1px solid #eee; }
-    #mainApp > .container { display: flex; flex-direction: column; overflow-x: visible; }
-    #tab-cal { width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); }
+    #tab-cal { margin-left: 0; margin-right: 0; }
     #tab-cal .card { border-radius: 0; box-shadow: none; }
     .cal-day { background: white; min-height: 90px; padding: 4px; font-size: 11px; position: relative; }
     .cal-header { background: #f8f9fa; text-align: center; font-weight: bold; padding: 5px; font-size: 12px; }
     .cal-today { background: #fff4e5; }
     .cal-event { background: #e7f1ff; color: #0d6efd; border-radius: 4px; padding: 3px; margin-top: 3px; font-size: 8px; line-height: 1.2; border-left: 3px solid #0d6efd; }
     .cal-done { background: #e6ffed; color: #28a745; border-left-color: #28a745; text-decoration: line-through; }
-    .cal-week-tag { font-size: 8px; color: #495057; display: block; margin-bottom: 1px; font-weight: bold;}
-    
+    .cal-week-tag { font-size: 8px; color: #495057; display: block; margin-bottom: 1px; font-weight: bold; }
+
     /* 修正：把 loader 移到真正的最上層 */
     #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
     
@@ -55,7 +55,7 @@
 <div id="mainApp" style="display: none;">
   <nav class="navbar navbar-dark bg-primary sticky-top"><div class="container-fluid"><span class="navbar-brand">531 課表管理系統</span></div></nav>
 
-  <div class="container mt-3">
+  <div class="content-wrapper">
     <div id="tab-log" class="tab-content">
       <div class="card p-3">
         <input type="date" class="form-control mb-3" id="targetDate" onchange="loadWorkouts()">
