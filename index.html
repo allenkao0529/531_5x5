@@ -5,434 +5,420 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>531 課表管理系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- 給 Apple iOS (iPhone/iPad) 辨識的 App Icon -->
   <link rel="apple-touch-icon" href="icon-180.png">
 
-  <!-- 給一般瀏覽器與 Android 辨識的網頁 Icon (Favicon) -->
   <link rel="icon" type="image/png" href="icon-512.png">
   <style>
     :root { --primary-color: #0d6efd; }
-    body { background-color: #f4f7f6; padding: 10px 10px 80px 10px; font-family: 'Microsoft JhengHei', -apple-system, sans-serif; font-size: 16px; }
-    .content-wrapper { max-width: 600px; margin: 0 auto; }
-    .my-tab { display: block; }
-    .card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-    .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; }
-    .nav-item { text-align: center; color: #888; text-decoration: none; font-size: 12px; flex: 1; }
+    body { background-color: #f4f7f6; padding-bottom: 80px; font-family: -apple-system, sans-serif; }
+    .card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-content: 1030; }
+    .nav-item { text-align: center; color: #6c757d; text-decoration: none; font-size: 12px; cursor: pointer; flex: 1; }
     .nav-item.active { color: var(--primary-color); font-weight: bold; }
-
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #eee; border: 1px solid #eee; }
-    #tab-cal { margin-left: 0; margin-right: 0; }
-    #tab-cal .card { border-radius: 0; box-shadow: none; }
-    .cal-day { background: white; min-height: 90px; padding: 4px; font-size: 11px; position: relative; }
-    .cal-header { background: #f8f9fa; text-align: center; font-weight: bold; padding: 5px; font-size: 12px; }
-    .cal-today { background: #fff4e5; }
-    .cal-event { background: #e7f1ff; color: #0d6efd; border-radius: 4px; padding: 3px; margin-top: 3px; font-size: 8px; line-height: 1.2; border-left: 3px solid #0d6efd; }
-    .cal-done { background: #e6ffed; color: #28a745; border-left-color: #28a745; text-decoration: line-through; }
-    .cal-week-tag { font-size: 8px; color: #495057; display: block; margin-bottom: 1px; font-weight: bold; }
-
-    /* 修正：把 loader 移到真正的最上層 */
-    #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+    .nav-item svg { display: block; margin: 0 auto 4px; width: 24px; height: 24px; }
     
-    /* 修正：登入畫面層級維持 1000，讓預設的 Modal(1055) 能夠浮在它上面 */
-    #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    
-    .option-group { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px;}
+    /* 日曆樣式 */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: white; padding: 10px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .cal-header { text-align: center; font-weight: bold; color: #495057; font-size: 14px; padding: 5px 0; }
+    .cal-day { min-height: 85px; border: 1px solid #f1f3f5; border-radius: 8px; padding: 4px; position: relative; font-size: 11px; cursor: pointer; background: #fff; transition: background 0.2s; }
+    .cal-day:hover { background: #f8f9fa; }
+    .cal-event { margin-top: 3px; padding: 2px 4px; background: #e7f5ff; color: #1c7ed6; border-radius: 4px; font-size: 10px; line-height: 1.2; border-left: 3px solid #339af0; }
+    .cal-event.cal-done { background: #ebfbee; color: #2b8a3e; border-left-color: #40c057; }
+    .cal-week-tag { position: absolute; top: 4px; right: 4px; background: #f1f3f5; color: #868e96; padding: 1px 4px; border-radius: 3px; font-size: 9px; scale: 0.9; }
+    .current-day-highlight { outline: 2px solid var(--primary-color); background: #f0f7ff !important; }
+
+    /* 動作卡片 */
+    .workout-item { border-bottom: 1px solid #eee; padding: 12px 0; }
+    .workout-item:last-child { border-bottom: none; }
+    .workout-badge { font-size: 11px; padding: 3px 6px; border-radius: 5px; }
+    .status-done { background-color: #ebfbee; color: #2b8a3e; }
+    .status-undone { background-color: #fff5f5; color: #c92a2a; }
   </style>
 </head>
 <body>
 
-<div id="loginScreen">
-  <div class="login-box">
-    <h3 class="mb-4 text-primary fw-bold">531 課表管理系統</h3>
-    <p class="text-muted mb-4 small">請輸入系統密碼以存取您的個人課表</p>
-    <input type="text" id="loginPwd" style="-webkit-text-security: disc;" class="form-control form-control-lg mb-3" placeholder="請輸入密碼" onkeypress="if(event.key === 'Enter') doLogin()">
-    <button class="btn btn-primary btn-lg w-100 fw-bold" onclick="doLogin()">登入系統</button>
+  <div id="loginOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:2000; display:flex; justify-content:center; align-items:center;">
+    <div class="card p-4 text-center" style="max-width: 320px; width:90%;">
+      <h4 class="mb-3">🔒 531 系統認證</h4>
+      <p class="text-muted small">請輸入通關密碼以載入資料庫</p>
+      <input type="password" id="passwordInput" class="form-control text-center mb-3" placeholder="請輸入密碼..." autocomplete="current-password">
+      <button class="btn btn-primary w-100" onclick="verifyAndInit()">驗證並登入</button>
+    </div>
   </div>
-</div>
 
-<div id="loader"><div class="spinner-border text-primary mb-2"></div><span id="loaderText" class="fw-bold text-secondary mt-2">處理中...</span></div>
+  <div class="container py-3">
+    <div id="page-calendar">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(-1)">◀ 上個月</button>
+        <h4 id="calMonthDisplay" class="mb-0 fw-bold">2026年 03月</h4>
+        <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(1)">下個月 ▶</button>
+      </div>
+      <div class="calendar-grid mb-3" id="calendarContainer"></div>
+    </div>
 
-<div id="mainApp" style="display: none;">
-  <div class="content-wrapper">
-    <div id="tab-log" class="my-tab active">
+    <div id="page-workout" style="display:none;">
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-sm btn-link p-0 me-2" onclick="switchPage('calendar')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16"><path fill-rule="even-rule" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/></svg>
+        </button>
+        <h4 id="workoutTitle" class="mb-0 fw-bold">本日訓練項目</h4>
+      </div>
       <div class="card p-3">
-        <input type="date" class="form-control mb-3" id="targetDate" onchange="loadWorkouts()">
-        <div id="workoutList"></div>
+        <div id="workoutListContainer">
+          <p class="text-muted text-center py-4">今天沒有排定的主項訓練任務休息日！</p>
+        </div>
       </div>
     </div>
 
-    <div id="tab-cal" class="my-tab" style="display:none;">
-      <div class="card p-2">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 id="calMonthDisplay" class="mb-0"></h6>
-          <div>
-            <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(-1)">‹</button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(1)">›</button>
-          </div>
+    <div id="page-settings" style="display:none;">
+      <h4 class="mb-3 fw-bold">⚙️ 1RM 與週期設定</h4>
+      
+      <div class="card p-3">
+        <h6 class="fw-bold text-primary mb-3">當前 1RM (Max 重量)</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-6"><label class="form-label small">肩推 OHP (kg)</label><input type="number" step="0.1" id="cfg-ohp" class="form-control"></div>
+          <div class="col-6"><label class="form-label small">硬舉 Deadlift (kg)</label><input type="number" step="0.1" id="cfg-dl" class="form-control"></div>
+          <div class="col-6"><label class="form-label small">臥推 Bench (kg)</label><input type="number" step="0.1" id="cfg-bp" class="form-control"></div>
+          <div class="col-6"><label class="form-label small">深蹲 Squat (kg)</label><input type="number" step="0.1" id="cfg-sq" class="form-control"></div>
         </div>
-        <div class="calendar-grid" id="calendarContainer"></div>
-      </div>
-    </div>
 
-    <div id="tab-gen" class="my-tab" style="display:none;">
-      <div class="card p-3 text-center">
-        <h6 class="mb-3">生成新週期 (4週份)</h6>
-        <div class="text-start bg-light p-2 rounded mb-3">
-          <label class="fw-bold d-block text-primary">設定新週期起始日 (Week 1)</label>
-          <input type="date" class="form-control mt-1" id="startDate">
+        <h6 class="fw-bold text-primary mb-3">下一輪遞增量 (Progression)</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-3"><label class="form-label small">OHP</label><input type="number" step="0.1" id="cfg-p-ohp" class="form-control"></div>
+          <div class="col-3"><label class="form-label small">DL</label><input type="number" step="0.1" id="cfg-p-dl" class="form-control"></div>
+          <div class="col-3"><label class="form-label small">BP</label><input type="number" step="0.1" id="cfg-p-bp" class="form-control"></div>
+          <div class="col-3"><label class="form-label small">SQ</label><input type="number" step="0.1" id="cfg-p-sq" class="form-control"></div>
         </div>
-        <div class="text-start bg-light p-2 rounded mb-3">
-          <label class="fw-bold d-block text-primary">課表類型選擇</label>
-          <div class="d-flex gap-4 mt-1">
-            <div class="form-check"><input class="form-check-input" type="radio" name="progType" id="prog531" value="531" checked><label class="form-check-label">標準 5/3/1</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="progType" id="prog5x5" value="5x5"><label class="form-check-label">力量 5x5</label></div>
-          </div>
-        </div>
-        <div class="text-start bg-light p-2 rounded mb-3">
-          <label class="fw-bold d-block text-primary">TM 強度計算基底</label>
-          <div class="d-flex gap-4 mt-1">
-            <div class="form-check"><input class="form-check-input" type="radio" name="tmRatio" id="tmLoose" value="0.9" checked><label class="form-check-label">寬鬆版 (90%)</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="tmRatio" id="tmStrict" value="0.95"><label class="form-check-label">嚴格版 (95%)</label></div>
-          </div>
-        </div>
-        <div class="form-check mb-3 text-start">
-          <input class="form-check-input" type="checkbox" id="incCheck">
-          <label class="form-check-label fw-bold" style="color: #d63384;">🔥 下一週期自動累加重量 (上肢2.5kg/下肢5kg)</label>
-        </div>
-        <button class="btn btn-primary w-100 py-2 fw-bold" onclick="generate()">🚀 生成課表並接續存檔</button>
-      </div>
-    </div>
 
-    <div id="tab-set" class="my-tab" style="display:none;">
-      <div class="card p-3 bg-light">
-        <h6 class="mb-3 text-secondary text-center">1RM 分離管理面板</h6>
-        <div id="settingsContainer"></div>
-        <button class="btn btn-success w-100 mt-3 py-2 fw-bold" onclick="saveSet()">💾 儲存設定</button>
+        <h6 class="fw-bold text-primary mb-3">控制參數</h6>
+        <div class="row g-2 mb-4">
+          <div class="col-6"><label class="form-label small">TM 比例 (通常 0.9)</label><input type="number" step="0.01" id="cfg-ratio" class="form-control"></div>
+          <div class="col-6"><label class="form-label small">當前週期 (Cycle)</label><input type="number" id="cfg-cycle" class="form-control"></div>
+        </div>
+
+        <button class="btn btn-primary w-100 mb-2" onclick="saveSettingsToServer()">儲存最新設定</button>
+        <button class="btn btn-outline-danger w-100" onclick="triggerRegenerate()">⚠️ 清空並重新產生4週課表</button>
       </div>
     </div>
   </div>
 
-  <div class="bottom-nav">
-    <a href="javascript:void(0)" class="nav-item active" onclick="showTab('log', this)"><div>📝</div>紀錄 / 調整日期</a>
-    <a href="javascript:void(0)" class="nav-item" onclick="showTab('cal', this)"><div>📅</div>課表月曆</a>
-    <a href="javascript:void(0)" class="nav-item" onclick="showTab('gen', this)"><div>🚀</div>安排課表</a>
-    <a href="javascript:void(0)" class="nav-item" onclick="showTab('set', this)"><div>⚙️</div>1RM設定</a>
-  </div>
-</div>
-
-<div class="modal fade" id="customModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" style="margin: 20px;">
-    <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
-      <div class="modal-body py-4" id="customModalBody" style="white-space: pre-line; font-size: 15px; color: #333;"></div>
-      <div class="modal-footer border-0 pt-0 pb-3" id="customModalFooter"></div>
+  <div class="modal fade" id="logModal" tindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content" style="border-radius:15px;">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title fw-bold" id="logModalLabel">填寫實際訓練成果</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="logModalSub" class="text-muted small mb-3"></p>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small fw-bold">實際重量 (kg)</label>
+              <input type="number" step="0.1" id="modalActualWeight" class="form-control text-center">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">實際下數 (Reps)</label>
+              <input type="number" id="modalActualReps" class="form-control text-center">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light w-100" id="modalSubmitBtn">確認送出</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-calendar" onclick="switchPage('calendar')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-calendar3" viewBox="0 0 16 16"><path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/><path d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+      531課表
+    </div>
+    <div class="nav-item" id="nav-workout" onclick="switchPage('workout')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-activity" viewBox="0 0 16 16"><path fill-rule="even-rule" d="M6 .5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V1 .5A.5.5 0 0 1 6 .5zm2 2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5zm2 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V7a.5.5 0 0 1 .5-.5zm2 2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V9a.5.5 0 0 1 .5-.5z"/><path d="M15.683 13.341A8 8 0 1 0 0 8a8 8 0 0 0 15.683 5.341c.176-.523.515-.992.932-1.341a1 1 0 0 0 0-1.6c-.417-.349-.756-.818-.932-1.341zM14.5 8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/></svg>
+      今日訓練
+    </div>
+    <div class="nav-item" id="nav-settings" onclick="switchPage('settings')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.893 1.64.902 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.292-.16c.765-.417 1.6.418 1.184 1.183l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.292c.417.765-.418 1.6-1.183 1.184l-.292-.159a1.873 1.873 0 0 0-2.692 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.765.417-1.6-.418-1.184-1.183l.159-.292a1.873 1.873 0 0 0-1.116-2.693l-.318-.094c-.835-.246-.835-1.428 0-1.674l.319-.094a1.873 1.873 0 0 0 1.115-2.692l-.16-.292c-.417-.765.418-1.6 1.183-1.184l.292.159A1.873 1.873 0 0 0 7.116 2.33l.048-.162z"/></svg>
+      參數設定
+    </div>
+  </nav>
 
-<script>
-  // ==========================================
-  // 🔥 請在這裡貼上你後端 GAS 的網頁應用程式網址
-  // ==========================================
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzjxHMb0SrGg0VEroFFcbXpRn3l4icZ9K_B21H0rzyDAJTK0caamcHRMduYAsr5TCOe2A/exec";
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 🔗 換上你部署好的 Google Apps Script 網頁應用程式 URL
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzQ_b_C4bIuY-R8yWq_l4f0OshEwL25K0H7m41K4D1-P5A5m8Y8N_pWfE2_Hymn9lR3/exec'; 
 
-  let currentCalDate = new Date();
-  let allEvents = {};
-  const movements = [
-    {id: 'Squat', name: '深蹲 Squat'}, {id: 'OverheadPress', name: '肩推 Press'}, 
-    {id: 'Deadlift', name: '硬舉 Deadlift'}, {id: 'BenchPress', name: '臥推 Bench'}
-  ];
+    let currentCalDate = new Date();
+    let currentSelectedDate = formatDateString(new Date());
+    let allEvents = {}; // 日曆事件快取
+    let currentWorkouts = []; // 本日訓練明細
 
-  let sessionPwd = '';
+    function formatDateString(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
 
-  // ================= API 核心驅動模組 =================
-  async function fetchAPI(action, data = {}) {
-    const payload = { action: action, password: sessionPwd, ...data };
-    try {
-      const res = await fetch(GAS_API_URL, {
+    // 通用後端呼叫 API 函式
+    async function callAPI(payload) {
+      const response = await fetch(GAS_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        body: JSON.stringify(payload)
       });
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  // ================= 介面共用模組 =================
-  let appModal;
-  window.addEventListener('DOMContentLoaded', () => { appModal = new bootstrap.Modal(document.getElementById('customModal')); });
-
-  function showAlert(msg) {
-    document.getElementById('customModalBody').innerHTML = msg;
-    document.getElementById('customModalFooter').innerHTML = '<button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">確定</button>';
-    appModal.show();
-  }
-
-  function showConfirm(msg, confirmCallback, btnText = '確定') {
-    document.getElementById('customModalBody').innerHTML = msg;
-    document.getElementById('customModalFooter').innerHTML = `
-      <button type="button" class="btn btn-light border w-100 mb-2" data-bs-dismiss="modal">取消</button>
-      <button type="button" class="btn btn-primary w-100 m-0" id="modalConfirmBtn">${btnText}</button>`;
-    document.getElementById('modalConfirmBtn').onclick = function() { appModal.hide(); confirmCallback(); };
-    appModal.show();
-  }
-
-  function showLoader(text = '處理中...') { document.getElementById('loaderText').innerText = text; document.getElementById('loader').style.display = 'flex'; }
-  function hideLoader() { document.getElementById('loader').style.display = 'none'; }
-
-  function showTab(id, el) {
-    ['log','cal','gen','set'].forEach(t => {
-      const tab = document.getElementById('tab-'+t);
-      if (tab) tab.style.display = (t === id) ? 'block' : 'none';
-    });
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
-    if(id === 'cal') renderCalendar();
-  }
-
-  function renderSettingsUI() {
-    let html = '';
-    movements.forEach(m => {
-      html += `
-      <div class="bg-white border rounded p-2 mb-2">
-        <div class="fw-bold text-primary mb-1 border-bottom">${m.name}</div>
-        <div class="row g-2">
-          <div class="col-6"><label class="text-muted small">基礎1RM</label><input type="number" class="form-control form-control-sm" id="${m.id}_1RM"></div>
-          <div class="col-6"><label class="text-muted small">累計增加</label><input type="number" class="form-control form-control-sm text-danger fw-bold" id="${m.id}_Added"></div>
-        </div>
-      </div>`;
-    });
-    document.getElementById('settingsContainer').innerHTML = html;
-  }
-
-  // ================= 登入與加速初始化模組 =================
-  window.onload = () => {
-    renderSettingsUI();
-    document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-  };
-
-  async function doLogin() {
-    const pwdInput = document.getElementById('loginPwd').value;
-    if(!pwdInput) return showAlert('請輸入密碼');
-    
-    // 顯示帶有明確提示的 Loader
-    showLoader('驗證並載入資料中 (約需 2~3 秒)...');
-    sessionPwd = pwdInput; 
-    const targetDate = document.getElementById('targetDate').value;
-    
-    try {
-      // 🚀 關鍵升級：透過三合一 API，一次把全部資料拿回來
-      const initData = await fetchAPI('initLoad', { targetDate: targetDate });
-      
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainApp').style.display = 'block';
-      
-      // 1. 填入設定資料
-      movements.forEach(m => {
-        document.getElementById(m.id + '_1RM').value = initData.settings[m.id + '_1RM'] || 0;
-        document.getElementById(m.id + '_Added').value = initData.settings[m.id + '_Added'] || 0;
-      });
-      
-      // 2. 繪製月曆
-      allEvents = initData.events;
-      renderCalendar();
-      
-      // 3. 繪製今日課表
-      renderWorkoutsData(initData.workouts, targetDate);
-
-    } catch(err) {
-      hideLoader();
-      sessionPwd = ''; 
-      showAlert(err.message);
-    }
-  }
-
-  // ================= 核心功能 (抽離繪製邏輯) =================
-  
-  // 為了讓 initLoad 可以重複利用渲染邏輯，特別將其拆分出來
-  function renderWorkoutsData(data, date) {
-    const list = document.getElementById('workoutList');
-    if (data.length === 0) {
-      list.innerHTML = '<p class="text-center text-muted py-4">今天沒有預定的訓練</p>';
-      hideLoader(); return;
+      return await response.json();
     }
 
-    let html = `<h6 class="mb-2 pb-2 border-bottom text-primary fw-bold">🏋️ ${data[0].week} 訓練日</h6>`;
-    data.forEach((item, i) => {
-      let isDisabled = item.isLogged === 'V' ? 'disabled style="background-color: #e9ecef;"' : '';
-      html += `
-        <div class="p-3 border-bottom">
-          <div class="d-flex justify-content-between mb-2">
-            <strong class="text-dark">${item.movement}</strong> <span class="badge bg-light text-dark border">${item.set}</span>
-          </div>
-          <div class="d-flex align-items-end">
-            <div class="me-auto" style="min-width: 75px;">
-              <span class="text-muted d-block" style="font-size: 10px; margin-bottom: 2px;">目標 (${item.percent || '-'})</span>
-              <span class="text-primary fw-bold" style="font-size: 14px;">${item.targetWeight}kg x ${item.targetReps}</span>
-            </div>
-            <div class="me-2">
-              <label class="text-muted small">實際重量</label>
-              <input type="number" id="aw-${i}" class="form-control form-control-sm text-center" value="${item.actualWeight}" ${isDisabled}>
-            </div>
-            <div class="me-2">
-              <label class="text-muted small">實際次數</label>
-              <input type="number" id="ar-${i}" class="form-control form-control-sm text-center" value="${item.actualReps.replace('+','')}" ${isDisabled}>
-            </div>
-            <div>
-              ${item.isLogged === 'V' ? '<span class="text-success fw-bold ps-2">✅</span>' : `<button id="btn-${i}" class="btn btn-sm btn-primary px-3" onclick="doLog(${i},${item.rowIdx},'${item.date}','${item.movement}')">OK</button>`}
-            </div>
-          </div>
-        </div>`;
-    });
-
-    html += `
-      <div class="alert alert-secondary p-3 mt-3 mb-0 border-0 rounded-3">
-        <strong class="d-block mb-2 text-dark" style="font-size: 13px;">📅 將本日課表移動至其他日期：</strong>
-        <div class="d-flex"><input type="date" id="newMoveDate" class="form-control form-control-sm me-2" value="${date}">
-        <button class="btn btn-sm btn-outline-primary px-3" onclick="moveSchedule('${date}')">移動</button></div>
-      </div>`;
-    list.innerHTML = html;
-    hideLoader();
-  }
-
-  let loadWorkoutsTimer = null;
-
-  function loadWorkouts() {
-    showLoader('讀取課表中...');
-    clearTimeout(loadWorkoutsTimer);
-    loadWorkoutsTimer = setTimeout(async () => {
-      const date = document.getElementById('targetDate').value;
+    // 🔒 驗證密碼並整合加載資料 (利用三合一 initLoad API)
+    async function verifyAndInit() {
+      const pwd = document.getElementById('passwordInput').value;
+      if (!pwd) { alert('請輸入密碼！'); return; }
+      
       try {
-        const data = await fetchAPI('getProgramByDate', { targetDate: date });
-        renderWorkoutsData(data, date);
-      } catch(err) { hideLoader(); showAlert(err.message); }
-    }, 300);
-  }
-
-  async function executeMove(oldDate, newDate) {
-    showLoader('移動並合併課表中...');
-    try {
-      const msg = await fetchAPI('moveWorkoutDate', { oldDate, newDateStr: newDate });
-      showAlert("✅ " + msg);
-      document.getElementById('targetDate').value = newDate;
-      allEvents = await fetchAPI('getAllPrograms');
-      renderCalendar();
-      loadWorkouts();
-    } catch(err) { hideLoader(); showAlert('移動失敗：' + err.message); }
-  }
-
-  function moveSchedule(oldDate) {
-    const newDate = document.getElementById('newMoveDate').value;
-    if (!newDate || oldDate === newDate) return showAlert('請選擇一個不同的日期！');
-    if (allEvents[newDate]) {
-      showConfirm(`⚠️ 目標日期已有課表，確定要合併嗎？`, () => executeMove(oldDate, newDate), '確定合併');
-    } else {
-      executeMove(oldDate, newDate);
+        // 登入時一口氣抓取系統參數、日曆所有摘要、本日動作
+        const res = await callAPI({
+          action: 'initLoad',
+          password: pwd,
+          targetDate: currentSelectedDate
+        });
+        
+        if (res.success) {
+          document.getElementById('loginOverlay').style.display = 'none';
+          
+          // 渲染設定頁面數據
+          renderSettingsForm(res.data.settings);
+          // 快取全域日曆摘要
+          allEvents = res.data.events || {};
+          // 快取本日動作
+          currentWorkouts = res.data.workouts || [];
+          
+          // 渲染畫面
+          renderCalendar();
+          renderWorkoutList();
+        } else {
+          alert(res.error);
+        }
+      } catch (err) {
+        alert('連線失敗，請檢查網路或 GAS URL 部署狀態：' + err);
+      }
     }
-  }
 
-  async function executeGenerate(sd, inc, tmRatio, progType) {
-    showLoader('正在生成課表與附加紀錄...');
-    try {
-      const msg = await fetchAPI('generateProgram', { startDateStr: sd, isIncrement: inc, tmRatio, progType });
-      showAlert(msg);
-      showLoader('刷新系統資料...');
-      const s = await fetchAPI('getSettings');
-      movements.forEach(move => {
-        document.getElementById(move.id + '_1RM').value = s[move.id + '_1RM'] || 0;
-        document.getElementById(move.id + '_Added').value = s[move.id + '_Added'] || 0;
+    // 渲染設定表單
+    function renderSettingsForm(s) {
+      if(!s) return;
+      document.getElementById('cfg-ohp').value = s['Overhead Press 1RM'] || '';
+      document.getElementById('cfg-dl').value = s['Deadlift 1RM'] || '';
+      document.getElementById('cfg-bp').value = s['Bench Press 1RM'] || '';
+      document.getElementById('cfg-sq').value = s['Squat 1RM'] || '';
+      document.getElementById('cfg-p-ohp').value = s['Progression OHP'] || '';
+      document.getElementById('cfg-p-dl').value = s['Progression Deadlift'] || '';
+      document.getElementById('cfg-p-bp').value = s['Progression Bench'] || '';
+      document.getElementById('cfg-p-sq').value = s['Progression Squat'] || '';
+      document.getElementById('cfg-ratio').value = s['Training Max Ratio'] || '';
+      document.getElementById('cfg-cycle').value = s['Current Cycle'] || '';
+    }
+
+    // 儲存設定
+    async function saveSettingsToServer() {
+      const pwd = document.getElementById('passwordInput').value;
+      const payload = {
+        'Overhead Press 1RM': Number(document.getElementById('cfg-ohp').value),
+        'Deadlift 1RM': Number(document.getElementById('cfg-dl').value),
+        'Bench Press 1RM': Number(document.getElementById('cfg-bp').value),
+        'Squat 1RM': Number(document.getElementById('cfg-sq').value),
+        'Progression OHP': Number(document.getElementById('cfg-p-ohp').value),
+        'Progression Deadlift': Number(document.getElementById('cfg-p-dl').value),
+        'Progression Bench': Number(document.getElementById('cfg-p-bp').value),
+        'Progression Squat': Number(document.getElementById('cfg-p-sq').value),
+        'Training Max Ratio': Number(document.getElementById('cfg-ratio').value),
+        'Current Cycle': Number(document.getElementById('cfg-cycle').value)
+      };
+
+      const res = await callAPI({ action: 'saveSettings', password: pwd, settings: payload });
+      if(res.success) alert('設定已成功寫入 Google 試算表！');
+      else alert('儲存失敗：' + res.error);
+    }
+
+    // 重新產生成課表
+    async function triggerRegenerate() {
+      if(!confirm('🚨 警告：重新產生成課表將會清空現有的 Program_Plan 課表進度，確定要執行嗎？')) return;
+      const pwd = document.getElementById('passwordInput').value;
+      const res = await callAPI({ action: 'generateProgram', password: pwd });
+      if(res.success) {
+        alert(res.data);
+        location.reload();
+      } else {
+        alert('失敗：' + res.error);
+      }
+    }
+
+    // 📅 渲染日曆
+    function renderCalendar() {
+      const container = document.getElementById('calendarContainer');
+      const display = document.getElementById('calMonthDisplay');
+      container.innerHTML = '';
+      ['日','一','二','三','四','五','六'].forEach(d => container.innerHTML += `<div class="cal-header">${d}</div>`);
+      
+      const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
+      display.innerText = `${year}年 ${month + 1}月`;
+      const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      for(let i=0; i<firstDay; i++) container.innerHTML += `<div class="cal-day bg-light"></div>`;
+      for(let d=1; d<=daysInMonth; d++) {
+        let fullDate = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        let event = allEvents[fullDate];
+        let isToday = (fullDate === currentSelectedDate) ? 'current-day-highlight' : '';
+        
+        container.innerHTML += `
+          <div class="cal-day ${isToday}" onclick="goToDate('${fullDate}')">
+            <strong class="d-block mb-1">${d}</strong>
+            ${event ? `<span class="cal-week-tag">${event.week}</span><div class="cal-event ${event.done?'cal-done':''}"><b>${event.move.split(' ')[0]}</b><br>${event.maxWeight}kg x ${event.sets}組</div>` : ''}
+          </div>`;
+      }
+    }
+
+    function changeMonth(offset) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + offset);
+      renderCalendar();
+    }
+
+    // 點擊日曆某一格，切換到該日動作明細
+    async function goToDate(dateStr) {
+      currentSelectedDate = dateStr;
+      switchPage('workout');
+      document.getElementById('workoutTitle').innerText = `${dateStr} 訓練細節`;
+      document.getElementById('workoutListContainer').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm"></div> 讀取中...</div>`;
+      
+      const pwd = document.getElementById('passwordInput').value;
+      const res = await callAPI({ action: 'getProgramByDate', password: pwd, targetDate: dateStr });
+      if(res.success) {
+        currentWorkouts = res.data;
+        renderWorkoutList();
+        renderCalendar(); // 刷新高亮狀態
+      }
+    }
+
+    // 🏋️ 渲染動作清單
+    function renderWorkoutList() {
+      const container = document.getElementById('workoutListContainer');
+      if(!currentWorkouts || currentWorkouts.length === 0) {
+        container.innerHTML = `<p class="text-muted text-center py-4">今天沒有排定的主項訓練任務 ☕ 休息日！</p>`;
+        return;
+      }
+      
+      let html = `<h5 class="fw-bold mb-3 text-secondary text-center">🏆 ${currentWorkouts[0].week} - ${currentWorkouts[0].movement}</h5>`;
+      currentWorkouts.forEach(w => {
+        let badge = w.isDone === 'V' ? `<span class="workout-badge status-done">✓ 已完成</span>` : `<span class="workout-badge status-undone">未完成</span>`;
+        let btnHtml = w.isDone === 'V' 
+          ? `<button class="btn btn-sm btn-success" disabled>✓ 已記錄 (${w.actualWeight}kg x ${w.actualReps})</button>`
+          : `<button class="btn btn-sm btn-primary" onclick="openLogModal(${w.rowIdx}, '${w.movement}', '${w.setNum}', ${w.targetWeight}, ${w.targetReps}, '${w.isAmrap}')">填寫記錄</button>`;
+          
+        html += `
+          <div class="workout-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold">${w.setNum}：<span class="text-primary fs-5">${w.targetWeight}</span> kg x ${w.targetReps}下 ${w.isAmrap==='Y'?'<span class="text-danger fw-bold">(AMRAP+)</span>':''}</div>
+              <div class="mt-1">${badge}</div>
+            </div>
+            <div>${btnHtml}</div>
+          </div>`;
       });
-      allEvents = await fetchAPI('getAllPrograms');
+      container.innerHTML = html;
+    }
+
+    // 彈出填寫視窗
+    function openLogModal(rowIdx, movement, setNum, targetWeight, targetReps, isAmrap) {
+      document.getElementById('logModalSub').innerText = `${movement} - ${setNum} (目標：${targetWeight}kg x ${targetReps}下${isAmrap==='Y'?' + AMRAP強度':''})`;
+      document.getElementById('modalActualWeight').value = targetWeight;
+      document.getElementById('modalActualReps').value = targetReps;
+      
+      // 動態綁定確認按鈕的點擊事件
+      document.getElementById('modalSubmitBtn').onclick = function() {
+        saveLog(rowIdx, movement);
+      };
+      
+      const modal = new bootstrap.Modal(document.getElementById('logModal'));
+      modal.show();
+    }
+
+    // 🚀 【妙招 2】前端樂觀更新 (Optimistic UI) ＋ 背景盲發
+    function saveLog(rowIdx, movement) {
+      const password = document.getElementById('passwordInput').value;
+      if(!password) { alert('請先輸入密碼！'); return; }
+      
+      const weight = document.getElementById('modalActualWeight').value;
+      const reps = document.getElementById('modalActualReps').value;
+      
+      if(!weight || !reps) { alert('請輸入實際重量與下數！'); return; }
+      
+      // 1. 【樂觀更新】不等後端回傳，直接在前端記憶體與畫面上標記為「已完成」
+      // 更新當前動作清單記憶體
+      if (currentWorkouts) {
+        const item = currentWorkouts.find(w => w.rowIdx === rowIdx);
+        if (item) {
+          item.isDone = 'V';
+          item.actualWeight = weight;
+          item.actualReps = reps;
+        }
+      }
+      
+      // 2. 局部同步更新全域日曆快取資料 (allEvents)，防止使用者切換畫面時穿幫
+      if (!allEvents[currentSelectedDate]) {
+        allEvents[currentSelectedDate] = { move: movement, week: "", maxWeight: weight, sets: 1, done: true };
+      } else {
+        allEvents[currentSelectedDate].done = true;
+        if (Number(weight) > Number(allEvents[currentSelectedDate].maxWeight)) {
+          allEvents[currentSelectedDate].maxWeight = weight;
+        }
+      }
+
+      // 3. 瞬間渲染最新畫面（日曆、動作卡片），達成 0 延遲的流暢感
+      renderWorkoutList();
       renderCalendar();
-      await loadWorkouts();
-      showTab('log', document.querySelector('.bottom-nav .nav-item')); 
-      hideLoader();
-    } catch(err) { hideLoader(); showAlert('產生失敗：' + err.message); }
-  }
 
-  function generate() {
-    const sd = document.getElementById('startDate').value;
-    const inc = document.getElementById('incCheck').checked;
-    const tmRatio = document.querySelector('input[name="tmRatio"]:checked').value;
-    const progType = document.querySelector('input[name="progType"]:checked').value;
+      // 4. 立刻把輸入彈跳視窗關閉，讓訓練節奏不卡頓
+      const modalEl = document.getElementById('logModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
 
-    let baseDate = new Date(sd);
-    let diff = baseDate.getDate() - baseDate.getDay() + (baseDate.getDay() == 0 ? -6 : 1);
-    let startMonday = new Date(baseDate.setDate(diff));
+      // 5. 準備打包傳送給後端的資料
+      const logData = {
+        rowIdx: rowIdx,
+        date: currentSelectedDate,
+        movement: movement,
+        actualWeight: weight,
+        actualReps: reps
+      };
 
-    let hasOverlap = false;
-    for (let i = 0; i < 28; i++) {
-      let checkDate = new Date(startMonday);
-      checkDate.setDate(startMonday.getDate() + i);
-      let y = checkDate.getFullYear(), m = String(checkDate.getMonth() + 1).padStart(2, '0'), d = String(checkDate.getDate()).padStart(2, '0');
-      if (allEvents[`${y}-${m}-${d}`]) { hasOverlap = true; break; }
+      // 6. 【背景盲發】故意拿掉 await，讓網頁默默在背景排隊發送
+      console.log('前端已更新 UI，開始背景上傳至 Google Sheet...');
+      callAPI({ action: 'logWorkout', password: password, logData: logData })
+        .then(res => {
+          if (!res.success) {
+            console.error('背景寫入失敗:', res.error);
+            alert('⚠️ 儲存發生異常，請重新整理網頁檢查！錯誤原因: ' + res.error);
+          } else {
+            console.log('✅ Google Sheet 寫入成功，後端快取已同步清空。');
+          }
+        })
+        .catch(err => {
+          console.error('網路連線失敗:', err);
+        });
     }
 
-    if (hasOverlap) {
-      showConfirm("⚠️ <strong class='text-danger'>發現衝突！</strong>\n\n選擇的區間內已有舊課表。\n繼續執行將會覆蓋衝突的部分。", () => executeGenerate(sd, inc, tmRatio, progType), '確定覆蓋');
-    } else {
-      executeGenerate(sd, inc, tmRatio, progType);
-    }
-  }
+    // 🔄 頁面切換控管
+    function switchPage(pageId) {
+      document.getElementById('page-calendar').style.display = pageId === 'calendar' ? 'block' : 'none';
+      document.getElementById('page-workout').style.display = pageId === 'workout' ? 'block' : 'none';
+      document.getElementById('page-settings').style.display = pageId === 'settings' ? 'block' : 'none';
+      
+      document.querySelectorAll('.bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(`nav-${pageId}`).classList.add('active');
 
-  async function doLog(i, row, d, m) {
-    const awEl = document.getElementById('aw-'+i), arEl = document.getElementById('ar-'+i), btn = document.getElementById('btn-'+i);
-    const aw = awEl.value, ar = arEl.value;
-    awEl.disabled = arEl.disabled = btn.disabled = true;
-    btn.innerText = '...';
-    try {
-      await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
-      allEvents = await fetchAPI('getAllPrograms');
-      loadWorkouts();
-    } catch(err) { 
-      showAlert('紀錄失敗：' + err.message); 
-      awEl.disabled = arEl.disabled = btn.disabled = false; btn.innerText = 'OK';
+      if (pageId === 'workout') {
+        document.getElementById('workoutTitle').innerText = `${currentSelectedDate} 訓練細節`;
+      }
     }
-  }
-
-  async function saveSet() {
-    let d = {};
-    movements.forEach(m => {
-      d[m.id + '_1RM'] = document.getElementById(m.id + '_1RM').value;
-      d[m.id + '_Added'] = document.getElementById(m.id + '_Added').value;
-    });
-    showLoader('儲存設定中...');
-    try {
-      const msg = await fetchAPI('saveSettings', { data: d });
-      hideLoader(); showAlert(msg);
-    } catch(err) { hideLoader(); showAlert('儲存失敗：' + err.message); }
-  }
-
-  function renderCalendar() {
-    const container = document.getElementById('calendarContainer');
-    const display = document.getElementById('calMonthDisplay');
-    container.innerHTML = '';
-    ['日','一','二','三','四','五','六'].forEach(d => container.innerHTML += `<div class="cal-header">${d}</div>`);
-    
-    const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
-    display.innerText = `${year}年 ${month + 1}月`;
-    const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    for(let i=0; i<firstDay; i++) container.innerHTML += `<div class="cal-day bg-light"></div>`;
-    for(let d=1; d<=daysInMonth; d++) {
-      let fullDate = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      let event = allEvents[fullDate];
-      container.innerHTML += `
-        <div class="cal-day" onclick="goToDate('${fullDate}')">
-          <strong class="d-block mb-1">${d}</strong>
-          ${event ? `<span class="cal-week-tag">${event.week}</span><div class="cal-event ${event.done?'cal-done':''}"><b>${event.move.split(' ')[0]}</b><br>${event.maxWeight}kg x ${event.sets}組</div>` : ''}
-        </div>`;
-    }
-  }
-  function changeMonth(dir) { currentCalDate.setMonth(currentCalDate.getMonth() + dir); renderCalendar(); }
-  function goToDate(date) { document.getElementById('targetDate').value = date; showTab('log', document.querySelector('.nav-item')); loadWorkouts(); }
-</script>
+  </script>
 </body>
 </html>
