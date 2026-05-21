@@ -257,7 +257,7 @@
   // ================= 核心功能 (抽離繪製邏輯) =================
   
   // 為了讓 initLoad 可以重複利用渲染邏輯，特別將其拆分出來
-  function renderWorkoutsData(data, date) {
+  function renderWorkoutsData(data, date, events) {
     const list = document.getElementById('workoutList');
     if (data.length === 0) {
       list.innerHTML = '<p class="text-center text-muted py-4">今天沒有預定的訓練</p>';
@@ -286,7 +286,7 @@
               <input type="number" id="ar-${i}" class="form-control form-control-sm text-center" value="${item.actualReps.replace('+','')}" ${isDisabled}>
             </div>
             <div>
-              ${item.isLogged === 'V' ? '<span class="text-success fw-bold ps-2">✅</span>' : `<button id="btn-${i}" class="btn btn-sm btn-primary px-3" onclick="doLog(${i},${item.rowIdx},'${item.date}','${item.movement}')">OK</button>`}
+              ${item.isLogged === 'V' ? '<span class="text-success fw-bold ps-2">✅</span>' : `<button id="btn-${i}" class="btn btn-sm btn-primary px-3" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">OK</button>`}
             </div>
           </div>
         </div>`;
@@ -388,12 +388,34 @@
     awEl.disabled = arEl.disabled = btn.disabled = true;
     btn.innerText = '...';
     try {
+      // 1. 先寫入 Sheets
       await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
-      allEvents = await fetchAPI('getAllPrograms');
-      loadWorkouts();
-    } catch(err) { 
-      showAlert('紀錄失敗：' + err.message); 
-      awEl.disabled = arEl.disabled = btn.disabled = false; btn.innerText = 'OK';
+
+      // 2. 更新 allEvents 的 doneCount
+      if (allEvents[d]) {
+        allEvents[d].doneCount += 1;
+        allEvents[d].done = (allEvents[d].doneCount === allEvents[d].sets);
+      }
+
+      // 3. 立刻更新 DOM：顯示打勾，禁用輸入
+      awEl.disabled = arEl.disabled = true;
+      awEl.style.backgroundColor = '#e9ecef';
+      arEl.style.backgroundColor = '#e9ecef';
+      btn.style.display = 'none';
+      const checkEl = document.createElement('span');
+      checkEl.className = 'text-success fw-bold ps-2';
+      checkEl.innerText = '✅';
+      btn.parentNode.replaceChild(checkEl, btn);
+
+      // 4. 同時更新月曆（不切換頁面）
+      renderCalendar();
+
+    } catch(err) {
+      // 寫入失敗：恢復按鈕讓使用者重試
+      btn.disabled = false; btn.innerText = 'OK';
+      awEl.style.backgroundColor = '';
+      arEl.style.backgroundColor = '';
+      showAlert('紀錄失敗：' + err.message);
     }
   }
 
