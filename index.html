@@ -392,7 +392,7 @@
       // 2. 更新 allEvents 的 doneCount
       if (allEvents[d]) {
         allEvents[d].doneCount += 1;
-        allEvents[d].done = (allEvents[d].doneCount === allEvents[d].sets);
+        allEvents[d].done = (allEvents[d].doneCount >= allEvents[d].sets);
       }
 
       // 3. 按鈕變綠色，顯示✅，恢復可點
