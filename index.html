@@ -395,9 +395,10 @@
         allEvents[d].done = (allEvents[d].doneCount === allEvents[d].sets);
       }
 
-      // 3. 按鈕變綠色，顯示✅
+      // 3. 按鈕變綠色，顯示✅，恢復可點
       btn.className = 'btn btn-sm btn-success w-100';
       btn.innerText = '✅ 已儲存';
+      btn.disabled = false;
 
       // 4. 同時更新月曆（不切換頁面）
       renderCalendar();
