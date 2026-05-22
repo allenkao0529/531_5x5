@@ -266,27 +266,26 @@
 
     let html = `<h6 class="mb-2 pb-2 border-bottom text-primary fw-bold">🏋️ ${data[0].week} 訓練日</h6>`;
     data.forEach((item, i) => {
-      let isDisabled = item.isLogged === 'V' ? 'disabled style="background-color: #e9ecef;"' : '';
       html += `
         <div class="p-3 border-bottom">
           <div class="d-flex justify-content-between mb-2">
             <strong class="text-dark">${item.movement}</strong> <span class="badge bg-light text-dark border">${item.set}</span>
           </div>
-          <div class="d-flex align-items-end">
-            <div class="me-auto" style="min-width: 75px;">
-              <span class="text-muted d-block" style="font-size: 10px; margin-bottom: 2px;">目標 (${item.percent || '-'})</span>
-              <span class="text-primary fw-bold" style="font-size: 14px;">${item.targetWeight}kg x ${item.targetReps}</span>
+          <div class="row g-2 align-items-end">
+            <div class="col-5">
+              <span class="text-muted d-block" style="font-size: 10px;">原訂 (${item.percent || '-'})</span>
+              <span class="text-primary fw-bold" style="font-size: 13px;">${item.targetWeight}kg x ${item.targetReps}</span>
             </div>
-            <div class="me-2">
+            <div class="col-3">
               <label class="text-muted small">實際重量</label>
-              <input type="number" id="aw-${i}" class="form-control form-control-sm text-center" value="${item.actualWeight}" ${isDisabled}>
+              <input type="number" id="aw-${i}" class="form-control form-control-sm text-center" value="${item.actualWeight}">
             </div>
-            <div class="me-2">
-              <label class="text-muted small">實際次數</label>
-              <input type="number" id="ar-${i}" class="form-control form-control-sm text-center" value="${item.actualReps.replace('+','')}" ${isDisabled}>
+            <div class="col-2">
+              <label class="text-muted small">次數</label>
+              <input type="number" id="ar-${i}" class="form-control form-control-sm text-center" value="${item.actualReps.replace('+','')}">
             </div>
-            <div>
-              ${item.isLogged === 'V' ? '<span class="text-success fw-bold ps-2">✅</span>' : `<button id="btn-${i}" class="btn btn-sm btn-primary px-3" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">OK</button>`}
+            <div class="col-2">
+              <button id="btn-${i}" class="btn btn-sm ${item.isLogged === 'V' ? 'btn-success' : 'btn-primary'} w-100" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
         </div>`;
@@ -385,10 +384,9 @@
   async function doLog(i, row, d, m) {
     const awEl = document.getElementById('aw-'+i), arEl = document.getElementById('ar-'+i), btn = document.getElementById('btn-'+i);
     const aw = awEl.value, ar = arEl.value;
-    awEl.disabled = arEl.disabled = btn.disabled = true;
-    btn.innerText = '...';
+    btn.disabled = true; btn.innerText = '...';
     try {
-      // 1. 先寫入 Sheets
+      // 1. 寫入 Sheets
       await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
 
       // 2. 更新 allEvents 的 doneCount
@@ -397,24 +395,18 @@
         allEvents[d].done = (allEvents[d].doneCount === allEvents[d].sets);
       }
 
-      // 3. 立刻更新 DOM：顯示打勾，禁用輸入
-      awEl.disabled = arEl.disabled = true;
-      awEl.style.backgroundColor = '#e9ecef';
-      arEl.style.backgroundColor = '#e9ecef';
-      btn.style.display = 'none';
-      const checkEl = document.createElement('span');
-      checkEl.className = 'text-success fw-bold ps-2';
-      checkEl.innerText = '✅';
-      btn.parentNode.replaceChild(checkEl, btn);
+      // 3. 按鈕變綠色，顯示✅
+      btn.className = 'btn btn-sm btn-success w-100';
+      btn.innerText = '✅ 已儲存';
 
       // 4. 同時更新月曆（不切換頁面）
       renderCalendar();
 
     } catch(err) {
-      // 寫入失敗：恢復按鈕讓使用者重試
-      btn.disabled = false; btn.innerText = 'OK';
-      awEl.style.backgroundColor = '';
-      arEl.style.backgroundColor = '';
+      // 寫入失敗：恢復按鈕，顯示 OK
+      btn.className = 'btn btn-sm btn-primary w-100';
+      btn.innerText = 'OK';
+      btn.disabled = false;
       showAlert('紀錄失敗：' + err.message);
     }
   }
