@@ -41,7 +41,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // For same-origin requests, use cache-first strategy
-  if (url.origin === location.origin || url.pathname.startsWith('/index.html')) {
+  if (url.origin === location.origin) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         }).catch(() => {
-          // Offline fallback for index.html
+          // Offline fallback for any navigation request
           if (event.request.destination === 'document') {
             return caches.match('/index.html');
           }
