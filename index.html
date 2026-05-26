@@ -361,7 +361,7 @@
               <button id="btn-${i}" class="btn btn-sm ${item.isLogged === 'V' ? 'btn-success' : 'btn-primary'} w-100" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
-          ${item.isLogged === 'V' ? `<div class="est-1rm-display mt-2">📐 估算 1RM: <strong>${Math.round(Number(item.actualWeight) * (1 + Number(item.actualReps.replace('+','')) / 30))} kg</strong></div>` : ''}
+          ${item.isLogged === 'V' ? `<div class="est-1rm-display mt-2">📐 估算 1RM: <strong>${Math.round(Math.min(Number(item.actualWeight) * (1 + Number(item.actualReps.replace('+','')) / 30), Number(item.actualWeight) * 1.25))} kg</strong></div>` : ''}
         </div>`;
     });
 
@@ -724,7 +724,7 @@
           pointRadius: 4,
           tension: 0.3,
           showLine: true,
-          spanGaps: false
+          spanGaps: true
         });
       }
     });
