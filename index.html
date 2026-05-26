@@ -563,6 +563,8 @@
     const statEmpty = document.getElementById('statEmpty');
     const prList = document.getElementById('prHistoryList');
 
+    showLoader('載入統計資料中...');
+
     try {
       // 載入統計數據
       const stats = await fetchAPI('getStatistics');
@@ -573,6 +575,7 @@
       document.getElementById('bodyweightDate').value = new Date().toISOString().split('T')[0];
 
       if (stats.summary.totalSessions === 0) {
+        hideLoader();
         statCharts.style.display = 'none';
         statEmpty.style.display = 'block';
         prList.innerHTML = '<p class="text-muted small text-center py-2">尚無 PR 紀錄</p>';
@@ -619,7 +622,10 @@
         prList.innerHTML = '<p class="text-muted small text-center py-2">尚無 PR 紀錄</p>';
       }
 
+      hideLoader();
+
     } catch(err) {
+      hideLoader();
       console.error('統計載入失敗:', err);
       statEmpty.style.display = 'block';
       statEmpty.innerHTML = `<p class="mb-0 text-danger">載入失敗：${err.message}</p>`;
