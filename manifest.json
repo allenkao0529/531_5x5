@@ -1,16 +1,24 @@
 {
-  "name": "531 & 5x5 課表管理系統",
-  "short_name": "531 & 5x5 課表管理",
-  "start_url": "./index.html",
+  "name": "531 課表管理系統",
+  "short_name": "531 課表",
+  "description": "5/3/1 力量訓練課表管理系統",
+  "start_url": "/index.html",
   "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#0d6efd",
   "orientation": "portrait",
-  "background_color": "#f1f5f9",
-  "theme_color": "#1e293b",
   "icons": [
     {
-      "src": "timetable.png",
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
