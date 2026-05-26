@@ -67,7 +67,7 @@
 <div id="loginScreen">
   <div class="login-box">
     <h3 class="mb-4 text-primary fw-bold">531 課表管理系統</h3>
-    <p class="text-muted mb-4 small">請輸入密碼以存取您的個人課表</p>
+    <p class="text-muted mb-4 small">請輸入系統密碼以存取您的個人課表</p>
     <input type="text" id="loginPwd" style="-webkit-text-security: disc;" class="form-control form-control-lg mb-3" placeholder="請輸入密碼" onkeypress="if(event.key === 'Enter') doLogin()">
     <button class="btn btn-primary btn-lg w-100 fw-bold" onclick="doLogin()">登入系統</button>
   </div>
@@ -592,9 +592,9 @@
       document.getElementById('statRecent').textContent = stats.summary.recentDays;
       document.getElementById('statPRs').textContent = prs.length;
 
-      // 訓練量趨勢圖（含 4 週移動平均）
-      if (stats.volumeData.length > 0) {
-        renderVolumeChart(stats.volumeData);
+      // 訓練量趨勢圖
+      if (Object.keys(stats.volumeTrends).length > 0) {
+        renderVolumeChart(stats.volumeTrends);
       }
 
       // 重量趨勢圖
@@ -638,56 +638,54 @@
     }
   }
 
-  function renderVolumeChart(volumeData) {
+  function renderVolumeChart(volumeTrends) {
     const ctx = document.getElementById('volumeChart').getContext('2d');
     if (volumeChartInstance) volumeChartInstance.destroy();
 
-    const labels = volumeData.map(d => d.date.slice(5));
-    const data = volumeData.map(d => d.volume);
+    const colors = { '深蹲 Squat': '#0d6efd', '肩推 Press': '#198754', '硬舉 Deadlift': '#fd7e14', '臥推 Bench': '#dc3545' };
+    const datasets = [];
+    const movementOrder = ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'];
 
-    // 7 天移動平均
-    const windowSize = 7;
-    const movingAvg = data.map((_, i) => {
-      if (i < windowSize - 1) return null;
-      let sum = 0;
-      for (let j = i - windowSize + 1; j <= i; j++) sum += data[j];
-      return Math.round(sum / windowSize);
+    // 收集所有日期
+    const allDates = new Set();
+    movementOrder.forEach(move => {
+      if (volumeTrends[move]) {
+        Object.keys(volumeTrends[move]).forEach(d => allDates.add(d));
+      }
     });
+    const sortedDates = [...allDates].sort();
 
-    const datasets = [{
-      label: '每日訓練量 (重量 × 次數)',
-      data: data,
-      borderColor: '#0d6efd',
-      backgroundColor: 'rgba(13,110,253,0.1)',
-      fill: true,
-      tension: 0.3,
-      pointRadius: 2
-    }];
-
-    if (volumeData.length >= windowSize) {
-      datasets.push({
-        label: '7 天移動平均',
-        data: movingAvg,
-        borderColor: '#dc3545',
-        borderDash: [5, 5],
-        pointRadius: 0,
-        fill: false,
-        tension: 0.3
-      });
-    }
+    movementOrder.forEach(move => {
+      if (volumeTrends[move] && Object.keys(volumeTrends[move]).length > 0) {
+        const data = sortedDates.map(d => ({
+          x: d,
+          y: volumeTrends[move][d] || null
+        }));
+        datasets.push({
+          label: move,
+          data: data,
+          borderColor: colors[move],
+          backgroundColor: colors[move],
+          pointRadius: 4,
+          tension: 0.3,
+          showLine: true,
+          spanGaps: true
+        });
+      }
+    });
 
     volumeChartInstance = new Chart(ctx, {
       type: 'line',
-      data: { labels: labels, datasets: datasets },
+      data: { datasets: datasets },
       options: {
         responsive: true,
         plugins: {
-          title: { display: true, text: '訓練量趨勢', font: { size: 14 } },
+          title: { display: true, text: '各動作訓練量趨勢', font: { size: 14 } },
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x: { display: true, title: { display: true, text: '日期' } },
-          y: { beginAtZero: true, title: { display: true, text: 'kg' } }
+          x: { type: 'category', title: { display: true, text: '日期' }, labels: sortedDates },
+          y: { beginAtZero: true, title: { display: true, text: '訓練量 (重量 × 次數)' } }
         }
       }
     });
@@ -807,7 +805,7 @@
   // ================= PWA Service Worker 註冊 =================
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=3', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
