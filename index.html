@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>531 課表管理系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <!-- 給 Apple iOS (iPhone/iPad) 辨識的 App Icon -->
   <link rel="apple-touch-icon" href="icon-180.png">
 
@@ -37,6 +38,20 @@
     #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     
+    .warmup-block { background: #f0f0f0; border-left: 3px solid #adb5bd; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 12px; }
+    .warmup-block .warmup-label { color: #6c757d; font-weight: 600; font-size: 11px; }
+    .warmup-block .warmup-detail { color: #495057; margin-top: 2px; }
+    .est-1rm-display { background: #fff3cd; border-radius: 6px; padding: 6px 10px; margin-top: 8px; font-size: 12px; color: #856404; }
+    .stat-card { background: white; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .stat-card .stat-value { font-size: 24px; font-weight: 700; color: var(--primary-color); }
+    .stat-card .stat-label { font-size: 11px; color: #6c757d; }
+    .chart-container { background: white; border-radius: 10px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
+    .pr-badge { display: inline-block; background: #dc3545; color: white; border-radius: 12px; padding: 2px 8px; font-size: 10px; font-weight: 600; margin-left: 4px; }
+    .pr-history-item { background: #fff8f0; border-left: 3px solid #ffc107; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+    .bodyweight-section { background: #e8f4f8; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+    .celebration-content { background: white; border-radius: 16px; padding: 30px; text-align: center; max-width: 300px; animation: popIn 0.3s ease; }
+    @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .option-group { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px;}
   </style>
 </head>
@@ -111,13 +126,58 @@
         <button class="btn btn-success w-100 mt-3 py-2 fw-bold" onclick="saveSet()">💾 儲存設定</button>
       </div>
     </div>
+
+    <div id="tab-stat" class="my-tab" style="display:none;">
+      <!-- 統計圖表 -->
+      <div id="statCharts" style="display:none;">
+        <div class="row g-2 mb-3">
+          <div class="col-3"><div class="stat-card"><div class="stat-value" id="statSessions">0</div><div class="stat-label">總訓練次數</div></div></div>
+          <div class="col-3"><div class="stat-card"><div class="stat-value" id="statVolume">0</div><div class="stat-label">總訓練量(kg)</div></div></div>
+          <div class="col-3"><div class="stat-card"><div class="stat-value" id="statRecent">0</div><div class="stat-label">近30天訓練天</div></div></div>
+          <div class="col-3"><div class="stat-card"><div class="stat-value" id="statPRs">0</div><div class="stat-label">PR 總數</div></div></div>
+        </div>
+        <div class="chart-container"><canvas id="volumeChart" height="200"></canvas></div>
+        <div class="chart-container"><canvas id="weightTrendChart" height="250"></canvas></div>
+      </div>
+      <div id="statEmpty" class="text-center py-5 text-muted">
+        <p class="mb-0">尚無訓練紀錄，開始訓練後即可看到統計</p>
+      </div>
+
+      <!-- 體重紀錄 -->
+      <div class="card p-3 mt-3">
+        <h6 class="mb-3 text-info fw-bold">⚖️ 體重紀錄</h6>
+        <div class="bodyweight-section">
+          <div class="row g-2 align-items-end">
+            <div class="col-5">
+              <label class="text-muted small">日期</label>
+              <input type="date" class="form-control form-control-sm" id="bodyweightDate">
+            </div>
+            <div class="col-4">
+              <label class="text-muted small">體重 (kg)</label>
+              <input type="number" step="0.1" class="form-control form-control-sm" id="bodyweightValue" placeholder="0.0">
+            </div>
+            <div class="col-3">
+              <button class="btn btn-info btn-sm w-100 text-white fw-bold" onclick="saveBodyWeight()">儲存</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container"><canvas id="bodyweightChart" height="180"></canvas></div>
+      </div>
+
+      <!-- PR 歷史 -->
+      <div class="card p-3 mt-3">
+        <h6 class="mb-3 text-warning fw-bold">🏆 PR 歷史紀錄</h6>
+        <div id="prHistoryList"><p class="text-muted small text-center py-2">尚無 PR 紀錄</p></div>
+      </div>
+    </div>
   </div>
 
   <div class="bottom-nav">
-    <a href="javascript:void(0)" class="nav-item active" onclick="showTab('log', this)"><div>📝</div>紀錄 / 調整日期</a>
-    <a href="javascript:void(0)" class="nav-item" onclick="showTab('cal', this)"><div>📅</div>課表月曆</a>
-    <a href="javascript:void(0)" class="nav-item" onclick="showTab('gen', this)"><div>🚀</div>安排課表</a>
-    <a href="javascript:void(0)" class="nav-item" onclick="showTab('set', this)"><div>⚙️</div>1RM設定</a>
+    <a href="javascript:void(0)" class="nav-item active" onclick="showTab('log', this)"><div>📝</div>紀錄</a>
+    <a href="javascript:void(0)" class="nav-item" onclick="showTab('cal', this)"><div>📅</div>課表</a>
+    <a href="javascript:void(0)" class="nav-item" onclick="showTab('gen', this)"><div>🚀</div>課表</a>
+    <a href="javascript:void(0)" class="nav-item" onclick="showTab('set', this)"><div>⚙️</div>設定</a>
+    <a href="javascript:void(0)" class="nav-item" onclick="showTab('stat', this)"><div>📊</div>統計</a>
   </div>
 </div>
 
@@ -136,7 +196,7 @@
   // ==========================================
   // 🔥 請在這裡貼上你後端 GAS 的網頁應用程式網址
   // ==========================================
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwOrHQPT_x5EtWMGVRx2fW0Qs1CZlTU4yB-vbyqYDTX0lOqK8Vp3sd6H74rqu_Kui414w/exec";
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzWf74iqUJ7JPn5By2_G00gdGh34c0pVPIF7weLU1i5/dev";
 
   let currentCalDate = new Date();
   let allEvents = {};
@@ -187,13 +247,14 @@
   function hideLoader() { document.getElementById('loader').style.display = 'none'; }
 
   function showTab(id, el) {
-    ['log','cal','gen','set'].forEach(t => {
+    ['log','cal','gen','set','stat'].forEach(t => {
       const tab = document.getElementById('tab-'+t);
       if (tab) tab.style.display = (t === id) ? 'block' : 'none';
     });
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     el.classList.add('active');
     if(id === 'cal') renderCalendar();
+    if(id === 'stat') renderStatistics();
   }
 
   function renderSettingsUI() {
@@ -266,6 +327,11 @@
 
     let html = `<h6 class="mb-2 pb-2 border-bottom text-primary fw-bold">🏋️ ${data[0].week} 訓練日</h6>`;
     data.forEach((item, i) => {
+      // 暖身組顯示
+      if (item.warmupWeight && item.warmupReps === 'warmup') {
+        html += `<div class="warmup-block"><div class="warmup-label">🔥 暖身組</div><div class="warmup-detail">${item.warmupWeight}</div></div>`;
+      }
+
       html += `
         <div class="p-3 border-bottom">
           <div class="d-flex justify-content-between mb-2">
@@ -288,6 +354,7 @@
               <button id="btn-${i}" class="btn btn-sm ${item.isLogged === 'V' ? 'btn-success' : 'btn-primary'} w-100" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
+          ${item.isLogged === 'V' ? `<div class="est-1rm-display mt-2">📐 估算 1RM: <strong>${Math.round(Number(item.actualWeight) * (1 + Number(item.actualReps.replace('+','')) / 30))} kg</strong></div>` : ''}
         </div>`;
     });
 
@@ -387,7 +454,7 @@
     btn.disabled = true; btn.innerText = '...';
     try {
       // 1. 寫入 Sheets
-      await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
+      const result = await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
 
       // 2. 更新 allEvents 的 doneCount
       if (allEvents[d]) {
@@ -402,6 +469,21 @@
 
       // 4. 同時更新月曆（不切換頁面）
       renderCalendar();
+
+      // 5. 顯示估算 1RM
+      if (result.est1RM && result.est1RM > 0) {
+        const est1RMEl = btn.parentElement.parentElement.querySelector('.est-1rm-display');
+        if (est1RMEl) {
+          est1RMEl.innerHTML = `📐 估算 1RM: <strong>${Math.round(result.est1RM)} kg</strong>`;
+        } else {
+          btn.parentElement.insertAdjacentHTML('beforeend', `<div class="est-1rm-display mt-2">📐 估算 1RM: <strong>${Math.round(result.est1RM)} kg</strong></div>`);
+        }
+      }
+
+      // 6. 檢查是否創 PR
+      if (result.pr && result.pr.length > 0) {
+        showPRCelebration(result.pr);
+      }
 
     } catch(err) {
       // 寫入失敗：恢復按鈕，顯示 OK
@@ -448,6 +530,226 @@
   }
   function changeMonth(dir) { currentCalDate.setMonth(currentCalDate.getMonth() + dir); renderCalendar(); }
   function goToDate(date) { document.getElementById('targetDate').value = date; showTab('log', document.querySelector('.nav-item')); loadWorkouts(); }
+
+  // ================= PR 慶祝動畫 =================
+  function showPRCelebration(prTypes) {
+    const overlay = document.createElement('div');
+    overlay.className = 'celebration';
+    overlay.innerHTML = `
+      <div class="celebration-content">
+        <div style="font-size: 48px;">🎉</div>
+        <h4 class="mt-3 mb-2 text-danger fw-bold">恭喜創 PR！</h4>
+        <p class="text-muted">${prTypes.join(' / ')} PR</p>
+        <button class="btn btn-danger w-100 mt-3" onclick="this.closest('.celebration').remove()">太棒了！</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  }
+
+  // ================= 統計圖表 =================
+  let volumeChartInstance = null;
+  let weightTrendChartInstance = null;
+  let bodyweightChartInstance = null;
+
+  async function renderStatistics() {
+    const statCharts = document.getElementById('statCharts');
+    const statEmpty = document.getElementById('statEmpty');
+    const prList = document.getElementById('prHistoryList');
+
+    try {
+      // 載入統計數據
+      const stats = await fetchAPI('getStatistics');
+      const prs = await fetchAPI('getPRs');
+      const bodyweights = await fetchAPI('getBodyWeight');
+
+      // 設定日期輸入框
+      document.getElementById('bodyweightDate').value = new Date().toISOString().split('T')[0];
+
+      if (stats.summary.totalSessions === 0) {
+        statCharts.style.display = 'none';
+        statEmpty.style.display = 'block';
+        prList.innerHTML = '<p class="text-muted small text-center py-2">尚無 PR 紀錄</p>';
+        bodyweightChartInstance = null;
+        return;
+      }
+
+      statCharts.style.display = 'block';
+      statEmpty.style.display = 'none';
+
+      // 統計卡片
+      document.getElementById('statSessions').textContent = stats.summary.totalSessions;
+      document.getElementById('statVolume').textContent = formatVolume(stats.summary.totalVolume);
+      document.getElementById('statRecent').textContent = stats.summary.recentDays;
+      document.getElementById('statPRs').textContent = prs.length;
+
+      // 訓練量趨勢圖
+      if (stats.volumeData.length > 0) {
+        renderVolumeChart(stats.volumeData);
+      }
+
+      // 重量趨勢圖
+      if (Object.keys(stats.weightTrends).length > 0) {
+        renderWeightTrendChart(stats.weightTrends);
+      }
+
+      // 體重圖表
+      if (bodyweights.length > 0) {
+        renderBodyweightChart(bodyweights);
+      } else {
+        if (bodyweightChartInstance) { bodyweightChartInstance.destroy(); bodyweightChartInstance = null; }
+      }
+
+      // PR 歷史
+      if (prs.length > 0) {
+        const recentPRs = prs.slice(-20).reverse();
+        prList.innerHTML = recentPRs.map(pr => `
+          <div class="pr-history-item">
+            <strong>${pr.movement}</strong> ${pr.weight}kg × ${pr.reps}
+            <span class="pr-badge">${pr.type}</span>
+            <div class="text-muted" style="font-size:10px;">${pr.date}</div>
+          </div>`).join('');
+      } else {
+        prList.innerHTML = '<p class="text-muted small text-center py-2">尚無 PR 紀錄</p>';
+      }
+
+    } catch(err) {
+      console.error('統計載入失敗:', err);
+      statEmpty.style.display = 'block';
+      statEmpty.innerHTML = `<p class="mb-0 text-danger">載入失敗：${err.message}</p>`;
+    }
+  }
+
+  function renderVolumeChart(volumeData) {
+    const ctx = document.getElementById('volumeChart').getContext('2d');
+    if (volumeChartInstance) volumeChartInstance.destroy();
+
+    const labels = volumeData.map(d => d.date.slice(5));
+    const data = volumeData.map(d => d.volume);
+
+    volumeChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '訓練總量 (重量 × 次數)',
+          data: data,
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13,110,253,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: '訓練量趨勢', font: { size: 14 } },
+          legend: { display: false }
+        },
+        scales: {
+          x: { display: true, title: { display: true, text: '日期' } },
+          y: { beginAtZero: true, title: { display: true, text: 'kg' } }
+        }
+      }
+    });
+  }
+
+  function renderWeightTrendChart(weightTrends) {
+    const ctx = document.getElementById('weightTrendChart').getContext('2d');
+    if (weightTrendChartInstance) weightTrendChartInstance.destroy();
+
+    const colors = { '深蹲 Squat': '#0d6efd', '肩推 Press': '#198754', '硬舉 Deadlift': '#fd7e14', '臥推 Bench': '#dc3545' };
+    const datasets = [];
+    const movementOrder = ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'];
+
+    movementOrder.forEach(move => {
+      if (weightTrends[move] && weightTrends[move].length > 0) {
+        datasets.push({
+          label: move,
+          data: weightTrends[move].map(d => ({ x: d.date, y: d.weight })),
+          borderColor: colors[move],
+          backgroundColor: colors[move],
+          pointRadius: 4,
+          tension: 0.3,
+          showLine: true
+        });
+      }
+    });
+
+    weightTrendChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { datasets: datasets },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: '各動作重量趨勢', font: { size: 14 } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { type: 'category', title: { display: true, text: '日期' }, labels: [...new Set(Object.values(weightTrends).flat().map(d => d.date))].sort() },
+          y: { beginAtZero: false, title: { display: true, text: '重量 (kg)' } }
+        }
+      }
+    });
+  }
+
+  function renderBodyweightChart(bodyweights) {
+    const ctx = document.getElementById('bodyweightChart').getContext('2d');
+    if (bodyweightChartInstance) bodyweightChartInstance.destroy();
+
+    const sorted = bodyweights.slice().reverse();
+    bodyweightChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: sorted.map(d => d.date.slice(5)),
+        datasets: [{
+          label: '體重 (kg)',
+          data: sorted.map(d => d.weight),
+          borderColor: '#0caaaa',
+          backgroundColor: 'rgba(12,170,170,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: '體重趨勢', font: { size: 14 } },
+          legend: { display: false }
+        },
+        scales: {
+          x: { display: true, title: { display: true, text: '日期' } },
+          y: { title: { display: true, text: 'kg' } }
+        }
+      }
+    });
+  }
+
+  // ================= 體重紀錄 =================
+  async function saveBodyWeight() {
+    const date = document.getElementById('bodyweightDate').value;
+    const weight = document.getElementById('bodyweightValue').value;
+    if (!date || !weight) return showAlert('請輸入日期與體重');
+
+    showLoader('儲存體重中...');
+    try {
+      const msg = await fetchAPI('saveBodyWeight', { bodyData: { date, weight: Number(weight) } });
+      hideLoader();
+      showAlert(msg);
+      // 重新繪製體重圖表
+      renderStatistics();
+    } catch(err) {
+      hideLoader();
+      showAlert('儲存失敗：' + err.message);
+    }
+  }
+
+  // ================= 輔助函式 =================
+  function formatVolume(vol) {
+    if (vol >= 1000) return (vol / 1000).toFixed(1) + 'K';
+    return vol.toString();
+  }
 </script>
 </body>
 </html>
