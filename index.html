@@ -592,7 +592,7 @@
       document.getElementById('statRecent').textContent = stats.summary.recentDays;
       document.getElementById('statPRs').textContent = prs.length;
 
-      // 訓練量趨勢圖
+      // 訓練量趨勢圖（含 4 週移動平均）
       if (stats.volumeData.length > 0) {
         renderVolumeChart(stats.volumeData);
       }
@@ -609,10 +609,16 @@
         if (bodyweightChartInstance) { bodyweightChartInstance.destroy(); bodyweightChartInstance = null; }
       }
 
-      // PR 歷史
-      if (prs.length > 0) {
-        const recentPRs = prs.slice(-20).reverse();
-        prList.innerHTML = recentPRs.map(pr => `
+      // PR 歷史：每個動作只顯示最大重量那次
+      const prByMove = {};
+      prs.forEach(pr => {
+        if (!prByMove[pr.movement] || pr.weight > prByMove[pr.movement].weight) {
+          prByMove[pr.movement] = pr;
+        }
+      });
+      const bestPRs = Object.values(prByMove).sort((a, b) => b.weight - a.weight);
+      if (bestPRs.length > 0) {
+        prList.innerHTML = bestPRs.map(pr => `
           <div class="pr-history-item">
             <strong>${pr.movement}</strong> ${pr.weight}kg × ${pr.reps}
             <span class="pr-badge">${pr.type}</span>
@@ -639,25 +645,46 @@
     const labels = volumeData.map(d => d.date.slice(5));
     const data = volumeData.map(d => d.volume);
 
+    // 計算 4 週移動平均 (28 天)
+    const windowSize = 28;
+    const movingAvg = data.map((_, i) => {
+      if (i < windowSize - 1) return null;
+      let sum = 0;
+      for (let j = i - windowSize + 1; j <= i; j++) sum += data[j];
+      return Math.round(sum / windowSize);
+    });
+
+    const datasets = [{
+      label: '每日訓練量 (重量 × 次數)',
+      data: data,
+      borderColor: '#0d6efd',
+      backgroundColor: 'rgba(13,110,253,0.1)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2
+    }];
+
+    // 只在全距內顯示移動平均線
+    if (volumeData.length >= windowSize) {
+      datasets.push({
+        label: '4 週移動平均',
+        data: movingAvg,
+        borderColor: '#dc3545',
+        borderDash: [5, 5],
+        pointRadius: 0,
+        fill: false,
+        tension: 0.3
+      });
+    }
+
     volumeChartInstance = new Chart(ctx, {
       type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: '訓練總量 (重量 × 次數)',
-          data: data,
-          borderColor: '#0d6efd',
-          backgroundColor: 'rgba(13,110,253,0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3
-        }]
-      },
+      data: { labels: labels, datasets: datasets },
       options: {
         responsive: true,
         plugins: {
           title: { display: true, text: '訓練量趨勢', font: { size: 14 } },
-          legend: { display: false }
+          tooltip: { mode: 'index', intersect: false }
         },
         scales: {
           x: { display: true, title: { display: true, text: '日期' } },
@@ -675,16 +702,30 @@
     const datasets = [];
     const movementOrder = ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'];
 
+    // 收集所有日期
+    const allDates = new Set();
     movementOrder.forEach(move => {
-      if (weightTrends[move] && weightTrends[move].length > 0) {
+      if (weightTrends[move]) {
+        Object.keys(weightTrends[move]).forEach(d => allDates.add(d));
+      }
+    });
+    const sortedDates = [...allDates].sort();
+
+    movementOrder.forEach(move => {
+      if (weightTrends[move] && Object.keys(weightTrends[move]).length > 0) {
+        const data = sortedDates.map(d => ({
+          x: d,
+          y: weightTrends[move][d] || null
+        }));
         datasets.push({
           label: move,
-          data: weightTrends[move].map(d => ({ x: d.date, y: d.weight })),
+          data: data,
           borderColor: colors[move],
           backgroundColor: colors[move],
           pointRadius: 4,
           tension: 0.3,
-          showLine: true
+          showLine: true,
+          spanGaps: false
         });
       }
     });
@@ -695,12 +736,12 @@
       options: {
         responsive: true,
         plugins: {
-          title: { display: true, text: '各動作重量趨勢', font: { size: 14 } },
+          title: { display: true, text: '各動作最大重量趨勢', font: { size: 14 } },
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x: { type: 'category', title: { display: true, text: '日期' }, labels: [...new Set(Object.values(weightTrends).flat().map(d => d.date))].sort() },
-          y: { beginAtZero: false, title: { display: true, text: '重量 (kg)' } }
+          x: { type: 'category', title: { display: true, text: '日期' }, labels: sortedDates },
+          y: { beginAtZero: false, title: { display: true, text: '最大重量 (kg)' } }
         }
       }
     });
