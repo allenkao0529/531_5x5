@@ -645,8 +645,8 @@
     const labels = volumeData.map(d => d.date.slice(5));
     const data = volumeData.map(d => d.volume);
 
-    // 計算 4 週移動平均 (28 天)
-    const windowSize = 28;
+    // 7 天移動平均
+    const windowSize = 7;
     const movingAvg = data.map((_, i) => {
       if (i < windowSize - 1) return null;
       let sum = 0;
@@ -664,10 +664,9 @@
       pointRadius: 2
     }];
 
-    // 只在全距內顯示移動平均線
     if (volumeData.length >= windowSize) {
       datasets.push({
-        label: '4 週移動平均',
+        label: '7 天移動平均',
         data: movingAvg,
         borderColor: '#dc3545',
         borderDash: [5, 5],
