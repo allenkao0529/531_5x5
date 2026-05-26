@@ -9,6 +9,13 @@
   <!-- 給 Apple iOS (iPhone/iPad) 辨識的 App Icon -->
   <link rel="apple-touch-icon" href="icon-180.png">
 
+  <!-- PWA: Manifest + 安裝提示 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="531 課表">
+
   <!-- 給一般瀏覽器與 Android 辨識的網頁 Icon (Favicon) -->
   <link rel="icon" type="image/png" href="icon-512.png">
   <style>
@@ -750,6 +757,50 @@
     if (vol >= 1000) return (vol / 1000).toFixed(1) + 'K';
     return vol.toString();
   }
+
+  // ================= PWA Service Worker 註冊 =================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => { console.log('SW registered:', reg.scope); })
+        .catch((err) => { console.log('SW registration failed:', err); });
+    });
+  }
+
+  // ================= PWA 安裝提示 =================
+  let deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // 5 秒後顯示安裝提示
+    setTimeout(() => {
+      if (!document.querySelector('#installBanner')) {
+        const banner = document.createElement('div');
+        banner.id = 'installBanner';
+        banner.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0d6efd;color:white;padding:10px 20px;border-radius:10px;z-index:9998;box-shadow:0 4px 15px rgba(0,0,0,0.2);font-size:13px;display:flex;align-items:center;gap:10px;max-width:90%;';
+        banner.innerHTML = `
+          <span>📲 新增至主畫面，快速開啟課表</span>
+          <button id="installBtn" class="btn btn-sm btn-light fw-bold" style="padding:2px 12px;">安裝</button>
+          <button id="installClose" class="btn btn-sm btn-link text-white" style="padding:2px 6px;font-size:16px;">✕</button>`;
+        document.body.appendChild(banner);
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+          banner.remove();
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            console.log('Install outcome:', outcome);
+          }
+        });
+
+        document.getElementById('installClose').addEventListener('click', () => {
+          banner.remove();
+        });
+      }
+    }, 5000);
+  });
 </script>
 </body>
 </html>
