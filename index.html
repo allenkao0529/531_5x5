@@ -132,6 +132,23 @@
         <div id="settingsContainer"></div>
         <button class="btn btn-success w-100 mt-3 py-2 fw-bold" onclick="saveSet()">💾 儲存設定</button>
       </div>
+
+      <div class="card p-3 mt-3">
+        <h6 class="mb-3 text-danger fw-bold">🔒 修改密碼</h6>
+        <div class="mb-2">
+          <label class="text-muted small">舊密碼</label>
+          <input type="password" class="form-control form-control-sm" id="oldPwd" placeholder="輸入舊密碼">
+        </div>
+        <div class="mb-2">
+          <label class="text-muted small">新密碼</label>
+          <input type="password" class="form-control form-control-sm" id="newPwd" placeholder="輸入新密碼">
+        </div>
+        <div class="mb-2">
+          <label class="text-muted small">確認新密碼</label>
+          <input type="password" class="form-control form-control-sm" id="confirmPwd" placeholder="再次輸入新密碼">
+        </div>
+        <button class="btn btn-danger w-100 py-2 fw-bold" onclick="changePassword()">更新密碼</button>
+      </div>
     </div>
 
     <div id="tab-stat" class="my-tab" style="display:none;">
@@ -796,6 +813,29 @@
     }
   }
 
+  async function changePassword() {
+    const oldPwd = document.getElementById('oldPwd').value;
+    const newPwd = document.getElementById('newPwd').value;
+    const confirmPwd = document.getElementById('confirmPwd').value;
+
+    if (!oldPwd || !newPwd || !confirmPwd) return showAlert('請填寫所有欄位');
+    if (newPwd !== confirmPwd) return showAlert('兩次輸入的新密碼不一致');
+    if (newPwd.length < 4) return showAlert('密碼至少需要 4 個字元');
+
+    showLoader('更新密碼中...');
+    try {
+      const msg = await fetchAPI('changePassword', { oldPassword: oldPwd, newPassword: newPwd });
+      hideLoader();
+      showAlert(msg);
+      document.getElementById('oldPwd').value = '';
+      document.getElementById('newPwd').value = '';
+      document.getElementById('confirmPwd').value = '';
+    } catch(err) {
+      hideLoader();
+      showAlert('密碼更新失敗：' + err.message);
+    }
+  }
+
   // ================= 輔助函式 =================
   function formatVolume(vol) {
     if (vol >= 1000) return (vol / 1000).toFixed(1) + 'K';
@@ -805,7 +845,7 @@
   // ================= PWA Service Worker 註冊 =================
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=3', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=4', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
