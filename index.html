@@ -1222,7 +1222,11 @@
         </div>`;
     }
   }
-  function changeMonth(dir) { currentCalDate.setMonth(currentCalDate.getMonth() + dir); renderCalendar(); }
+  function changeMonth(dir) {
+    currentCalDate.setDate(1); // 避免 5/31 → setMonth(5) 溢出到 7/1
+    currentCalDate.setMonth(currentCalDate.getMonth() + dir);
+    renderCalendar();
+  }
   function goToDate(date) { document.getElementById('targetDate').value = date; showTab('log', document.querySelector('.nav-item')); loadWorkouts(); }
 
   // ═══════ PR 慶祝 ═══════
@@ -1541,7 +1545,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=4', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=12', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
