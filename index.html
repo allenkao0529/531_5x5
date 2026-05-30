@@ -308,7 +308,7 @@
     }
     .workout-btn {
       border: none; border-radius: 8px;
-      padding: 10px 0; font-size: 13px;
+      padding: 12px 0; font-size: 15px;
       font-weight: 700; font-family: 'Noto Sans TC', sans-serif;
       transition: transform 0.1s ease, background 0.2s ease;
       flex: 1; letter-spacing: 1px;
@@ -348,6 +348,15 @@
       color: #7B6000; border: 1px solid #FFE082;
     }
     .est-1rm-display .mono { font-weight: 600; }
+
+    /* ── 樂觀更新：同步中動畫 ── */
+    .workout-btn.btn-syncing {
+      animation: syncPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes syncPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
 
     /* ── 統計卡片 ── */
     .stat-card {
@@ -1001,15 +1010,15 @@
             原訂 <strong>${item.targetWeight}kg × ${item.targetReps}</strong> <span class="text-muted-custom" style="font-size:11px;">(${item.percent || '-'})</span>
           </div>
           <div class="workout-inputs">
-            <div class="workout-input-group" style="flex:3;">
+            <div class="workout-input-group" style="flex:2.5;">
               <label>重量</label>
               <input type="number" id="aw-${i}" class="mono" value="${item.actualWeight}">
             </div>
-            <div class="workout-input-group" style="flex:2;">
+            <div class="workout-input-group" style="flex:1.5;">
               <label>次數</label>
               <input type="number" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}">
             </div>
-            <div class="workout-input-group" style="flex:2.5;">
+            <div class="workout-input-group" style="flex:3;">
               <label>&nbsp;</label>
               <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-navy'}" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
@@ -1113,40 +1122,57 @@
 
   async function doLog(i, row, d, m) {
     const awEl = document.getElementById('aw-'+i), arEl = document.getElementById('ar-'+i), btn = document.getElementById('btn-'+i);
+    const card = btn.closest('.workout-card');
     const aw = awEl.value, ar = arEl.value;
-    btn.disabled = true; btn.innerText = '...';
+
+    // ── 樂觀更新：立即顯示「已儲存」 ──
+    const prevClassName = btn.className;
+    const prevText = btn.innerText;
+    const prevDone = allEvents[d] ? { ...allEvents[d] } : null;
+
+    btn.className = 'workout-btn btn-done btn-syncing';
+    btn.innerText = '✅ 儲存中...';
+    btn.disabled = true;
+
+    if (allEvents[d]) {
+      allEvents[d].doneCount += 1;
+      allEvents[d].done = (allEvents[d].doneCount >= allEvents[d].sets);
+    }
+    renderCalendar();
+
+    // ── 背景寫入 API ──
+    let result;
     try {
-      const result = await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
-
-      if (allEvents[d]) {
-        allEvents[d].doneCount += 1;
-        allEvents[d].done = (allEvents[d].doneCount >= allEvents[d].sets);
-      }
-
-      btn.className = 'workout-btn btn-done';
-      btn.innerText = '✅ 已儲存';
-      btn.disabled = false;
-
-      renderCalendar();
-
-      if (result.est1RM && result.est1RM > 0) {
-        const est1RMEl = btn.closest('.workout-card').querySelector('.est-1rm-display');
-        if (est1RMEl) {
-          est1RMEl.innerHTML = `📐 估算 1RM: <span class="mono"><strong>${Math.round(result.est1RM)}</strong> kg</span>`;
-        } else {
-          btn.closest('.workout-card').insertAdjacentHTML('beforeend', `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${Math.round(result.est1RM)}</strong> kg</span></div>`);
-        }
-      }
-
-      if (result.pr && result.pr.length > 0) {
-        showPRCelebration(result.pr);
-      }
-
+      result = await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
     } catch(err) {
-      btn.className = 'workout-btn btn-navy';
-      btn.innerText = 'OK';
+      // ── 寫入失敗：回滾 ──
+      btn.className = prevClassName;
+      btn.innerText = prevText;
       btn.disabled = false;
+      if (prevDone) {
+        allEvents[d] = prevDone;
+        renderCalendar();
+      }
       showAlert('紀錄失敗：' + err.message);
+      return;
+    }
+
+    // ── 寫入成功：移除動畫，顯示最終狀態 ──
+    btn.className = 'workout-btn btn-done';
+    btn.innerText = '✅ 已儲存';
+    btn.disabled = false;
+
+    if (result.est1RM && result.est1RM > 0) {
+      const est1RMEl = card.querySelector('.est-1rm-display');
+      if (est1RMEl) {
+        est1RMEl.innerHTML = `📐 估算 1RM: <span class="mono"><strong>${Math.round(result.est1RM)}</strong> kg</span>`;
+      } else {
+        card.insertAdjacentHTML('beforeend', `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${Math.round(result.est1RM)}</strong> kg</span></div>`);
+      }
+    }
+
+    if (result.pr && result.pr.length > 0) {
+      showPRCelebration(result.pr);
     }
   }
 
