@@ -1010,15 +1010,15 @@
             原訂 <strong>${item.targetWeight}kg × ${item.targetReps}</strong> <span class="text-muted-custom" style="font-size:11px;">(${item.percent || '-'})</span>
           </div>
           <div class="workout-inputs">
-            <div class="workout-input-group" style="flex:1.5;">
+            <div class="workout-input-group" style="flex:2;">
               <label>重量</label>
               <input type="number" id="aw-${i}" class="mono" value="${item.actualWeight}">
             </div>
-            <div class="workout-input-group" style="flex:1;">
+            <div class="workout-input-group" style="flex:1.5;">
               <label>次數</label>
               <input type="number" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}">
             </div>
-            <div class="workout-input-group" style="flex:5;">
+            <div class="workout-input-group" style="flex:3.5;">
               <label>&nbsp;</label>
               <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-navy'}" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
@@ -1545,7 +1545,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=13', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=14', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
