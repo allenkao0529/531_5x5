@@ -639,6 +639,16 @@
     }
 
     /* ── 響應式 ── */
+    /* 手機版：輸入框垂直堆疊，按鈕全寬 */
+    @media (max-width: 480px) {
+      .workout-inputs {
+        flex-direction: column; gap: 6px;
+      }
+      .workout-input-group { flex: none !important; width: 100%; }
+      .workout-input-group input { padding: 14px 8px; font-size: 20px; }
+      .workout-btn { padding: 16px 0; font-size: 17px; }
+    }
+
     @media (max-width: 360px) {
       .login-brand { font-size: 44px; }
       .stat-card .stat-value { font-size: 18px; }
@@ -1010,15 +1020,15 @@
             原訂 <strong>${item.targetWeight}kg × ${item.targetReps}</strong> <span class="text-muted-custom" style="font-size:11px;">(${item.percent || '-'})</span>
           </div>
           <div class="workout-inputs">
-            <div class="workout-input-group" style="flex:2;">
+            <div class="workout-input-group" style="flex:1.5;">
               <label>重量</label>
               <input type="number" id="aw-${i}" class="mono" value="${item.actualWeight}">
             </div>
-            <div class="workout-input-group" style="flex:1.5;">
+            <div class="workout-input-group" style="flex:1;">
               <label>次數</label>
               <input type="number" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}">
             </div>
-            <div class="workout-input-group" style="flex:3.5;">
+            <div class="workout-input-group" style="flex:4.5;">
               <label>&nbsp;</label>
               <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-navy'}" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
