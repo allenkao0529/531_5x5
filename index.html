@@ -810,11 +810,11 @@
           <h6 class="section-title text-teal">體重紀錄</h6>
           <div class="bodyweight-section">
             <div class="row g-2 align-items-end">
-              <div class="col-5">
+              <div class="col-6">
                 <label class="form-label-sm">日期</label>
                 <input type="date" class="w-100" id="bodyweightDate">
               </div>
-              <div class="col-4">
+              <div class="col-3">
                 <label class="form-label-sm">體重 (kg)</label>
                 <input type="number" step="0.1" class="w-100" id="bodyweightValue" placeholder="0.0">
               </div>
@@ -948,7 +948,12 @@
 
   // ═══════ UI 共用 ═══════
   let appModal;
-  window.addEventListener('DOMContentLoaded', () => { appModal = new bootstrap.Modal(document.getElementById('customModal')); });
+  window.addEventListener('DOMContentLoaded', () => {
+    appModal = new bootstrap.Modal(document.getElementById('customModal'));
+    renderSettingsUI();
+    document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+  });
 
   function showAlert(msg) {
     document.getElementById('customModalBody').innerHTML = msg;
@@ -1003,12 +1008,7 @@
   }
 
   // ═══════ 初始化 ═══════
-  window.onload = () => {
-    renderSettingsUI();
-    document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-  };
-
+ 
   // ═══════ 登入 ═══════
   async function doLogin() {
     const pwdInput = document.getElementById('loginPwd').value;
@@ -1016,7 +1016,7 @@
 
     showLoader('驗證並載入資料中 (約需 2~3 秒)...');
     sessionPwd = pwdInput;
-    const targetDate = document.getElementById('targetDate').value;
+    const targetDate = document.getElementById('targetDate').value || new Date().toISOString().split('T')[0];
 
     try {
       const initData = await API.post('initLoad', { targetDate: targetDate });
@@ -1525,7 +1525,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=17', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=19', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
