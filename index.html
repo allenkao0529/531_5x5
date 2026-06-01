@@ -951,8 +951,8 @@
   window.addEventListener('DOMContentLoaded', () => {
     appModal = new bootstrap.Modal(document.getElementById('customModal'));
     renderSettingsUI();
-    document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('targetDate').value = getLocalDateString();
+    document.getElementById('startDate').value = getLocalDateString();
   });
 
   function showAlert(msg) {
@@ -1007,8 +1007,6 @@
     document.getElementById('settingsContainer').innerHTML = html;
   }
 
-  // ═══════ 初始化 ═══════
- 
   // ═══════ 登入 ═══════
   async function doLogin() {
     const pwdInput = document.getElementById('loginPwd').value;
@@ -1016,7 +1014,7 @@
 
     showLoader('驗證並載入資料中 (約需 2~3 秒)...');
     sessionPwd = pwdInput;
-    const targetDate = document.getElementById('targetDate').value || new Date().toISOString().split('T')[0];
+    const targetDate = document.getElementById('targetDate').value || getLocalDateString();
 
     try {
       const initData = await API.post('initLoad', { targetDate: targetDate });
@@ -1319,7 +1317,7 @@
       const prs = await API.post('getPRs');
       const bodyweights = await API.post('getBodyWeight');
 
-      document.getElementById('bodyweightDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('bodyweightDate').value = getLocalDateString();
 
       if (stats.summary.totalSessions === 0) {
         hideLoader();
@@ -1522,10 +1520,16 @@
     return vol.toString();
   }
 
+  // 本地日期字串 (yyyy-MM-dd)，避免 toISOString() 回傳 UTC 日期
+  function getLocalDateString() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=19', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=20', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
