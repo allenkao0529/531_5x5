@@ -870,11 +870,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  // ==========================================
-  // GAS API URL
-  // ==========================================
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwOrHQPT_x5EtWMGVRx2fW0Qs1CZlTU4yB-vbyqYDTX0lOqK8Vp3sd6H74rqu_Kui414w/exec";
-
   let currentCalDate = new Date();
   let allEvents = {};
   const movements = [
@@ -884,22 +879,72 @@
 
   let sessionPwd = '';
 
-  // ═══════ API ═══════
-  async function fetchAPI(action, data = {}) {
-    const payload = { action: action, password: sessionPwd, ...data };
-    try {
-      const res = await fetch(GAS_API_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-      });
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    } catch (err) {
-      throw err;
+  // ═══════ API — deep module ═══════
+  // Interface: post(action, data) → result.data
+  // Implementation hides: URL, auth injection, 8s timeout, 1-retry on network/5xx, error classification
+
+  class AuthError extends Error { constructor(msg) { super(msg); this.name = 'AuthError'; } }
+  class ValidationError extends Error { constructor(msg) { super(msg); this.name = 'ValidationError'; } }
+  class NetworkError extends Error { constructor(msg) { super(msg); this.name = 'NetworkError'; } }
+
+  const API = {
+    _url: 'https://script.google.com/macros/s/AKfycbwOrHQPT_x5EtWMGVRx2fW0Qs1CZlTU4yB-vbyqYDTX0lOqK8Vp3sd6H74rqu_Kui414w/exec',
+    _timeout: 8000,
+    _maxRetries: 1,
+
+    _classify: function(result) {
+      if (result.error && result.error.toLowerCase().includes('密碼')) throw new AuthError(result.error);
+      if (result.error && result.error.toLowerCase().includes('未知')) throw new ValidationError(result.error);
+      throw new Error(result.error);
+    },
+
+    _request: async function(action, data) {
+      const payload = { action: action, password: sessionPwd, ...data };
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), this._timeout);
+
+      try {
+        const res = await fetch(this._url, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        // Handle HTTP errors
+        if (!res.ok) {
+          if (res.status >= 500) throw new NetworkError('Server error: ' + res.status);
+          throw new NetworkError('HTTP ' + res.status);
+        }
+
+        const result = await res.json();
+        if (!result.success) this._classify(result);
+        return result.data;
+      } catch (err) {
+        clearTimeout(timer);
+        // Retry on network errors and timeout
+        if (err instanceof NetworkError || err.name === 'AbortError') {
+          throw err; // will be retried by caller
+        }
+        throw err; // auth/validation errors — don't retry
+      }
+    },
+
+    post: async function(action, data) {
+      let lastErr;
+      for (let attempt = 0; attempt <= this._maxRetries; attempt++) {
+        try {
+          return await this._request(action, data);
+        } catch (err) {
+          lastErr = err;
+          if (err.name === 'AuthError' || err.name === 'ValidationError') throw err;
+          if (attempt < this._maxRetries) continue; // retry
+        }
+      }
+      throw lastErr;
     }
-  }
+  };
 
   // ═══════ UI 共用 ═══════
   let appModal;
@@ -974,7 +1019,7 @@
     const targetDate = document.getElementById('targetDate').value;
 
     try {
-      const initData = await fetchAPI('initLoad', { targetDate: targetDate });
+      const initData = await API.post('initLoad', { targetDate: targetDate });
 
       document.getElementById('loginScreen').style.opacity = '0';
       document.getElementById('loginScreen').style.transition = 'opacity 0.3s ease';
@@ -1063,7 +1108,7 @@
     loadWorkoutsTimer = setTimeout(async () => {
       const date = document.getElementById('targetDate').value;
       try {
-        const data = await fetchAPI('getProgramByDate', { targetDate: date });
+        const data = await API.post('getProgramByDate', { targetDate: date });
         renderWorkoutsData(data, date);
       } catch(err) { hideLoader(); showAlert(err.message); }
     }, 300);
@@ -1072,10 +1117,10 @@
   async function executeMove(oldDate, newDate) {
     showLoader('移動並合併課表中...');
     try {
-      const msg = await fetchAPI('moveWorkoutDate', { oldDate, newDateStr: newDate });
+      const msg = await API.post('moveWorkoutDate', { oldDate, newDateStr: newDate });
       showAlert("✅ " + msg);
       document.getElementById('targetDate').value = newDate;
-      allEvents = await fetchAPI('getAllPrograms');
+      allEvents = await API.post('getAllPrograms');
       renderCalendar();
       loadWorkouts();
     } catch(err) { hideLoader(); showAlert('移動失敗：' + err.message); }
@@ -1094,15 +1139,15 @@
   async function executeGenerate(sd, inc, tmRatio, progType) {
     showLoader('正在生成課表與附加紀錄...');
     try {
-      const msg = await fetchAPI('generateProgram', { startDateStr: sd, isIncrement: inc, tmRatio, progType });
+      const msg = await API.post('generateProgram', { startDateStr: sd, isIncrement: inc, tmRatio, progType });
       showAlert(msg);
       showLoader('刷新系統資料...');
-      const s = await fetchAPI('getSettings');
+      const s = await API.post('getSettings');
       movements.forEach(move => {
         document.getElementById(move.id + '_1RM').value = s[move.id + '_1RM'] || 0;
         document.getElementById(move.id + '_Added').value = s[move.id + '_Added'] || 0;
       });
-      allEvents = await fetchAPI('getAllPrograms');
+      allEvents = await API.post('getAllPrograms');
       renderCalendar();
       await loadWorkouts();
       showTab('log', document.querySelector('.bottom-nav .nav-item'));
@@ -1158,7 +1203,7 @@
     // ── 背景寫入 API ──
     let result;
     try {
-      result = await fetchAPI('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
+      result = await API.post('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
     } catch(err) {
       // ── 寫入失敗：回滾 ──
       btn.className = prevClassName;
@@ -1199,7 +1244,7 @@
     });
     showLoader('儲存設定中...');
     try {
-      const msg = await fetchAPI('saveSettings', { data: d });
+      const msg = await API.post('saveSettings', { data: d });
       hideLoader(); showAlert(msg);
     } catch(err) { hideLoader(); showAlert('儲存失敗：' + err.message); }
   }
@@ -1260,9 +1305,7 @@
   }
 
   // ═══════ 統計 ═══════
-  let volumeChartInstance = null;
-  let weightTrendChartInstance = null;
-  let bodyweightChartInstance = null;
+  let chartInstances = {};
 
   async function renderStatistics() {
     const statCharts = document.getElementById('statCharts');
@@ -1272,9 +1315,9 @@
     showLoader('載入統計資料中...');
 
     try {
-      const stats = await fetchAPI('getStatistics');
-      const prs = await fetchAPI('getPRs');
-      const bodyweights = await fetchAPI('getBodyWeight');
+      const stats = await API.post('getStatistics');
+      const prs = await API.post('getPRs');
+      const bodyweights = await API.post('getBodyWeight');
 
       document.getElementById('bodyweightDate').value = new Date().toISOString().split('T')[0];
 
@@ -1283,7 +1326,7 @@
         statCharts.style.display = 'none';
         statEmpty.style.display = 'block';
         prList.innerHTML = '<p class="text-muted-custom small text-center py-2">尚無 PR 紀錄</p>';
-        bodyweightChartInstance = null;
+        chartInstances.bodyweight = null;
         return;
       }
 
@@ -1296,15 +1339,15 @@
       document.getElementById('statPRs').textContent = prs.length;
 
       if (Object.keys(stats.volumeTrends).length > 0) {
-        renderVolumeChart(stats.volumeTrends);
+        ChartService.renderTrendChart('volumeChart', stats.volumeTrends, '各動作訓練量趨勢', true);
       }
       if (Object.keys(stats.weightTrends).length > 0) {
-        renderWeightTrendChart(stats.weightTrends);
+        ChartService.renderTrendChart('weightTrendChart', stats.weightTrends, '各動作最大重量趨勢', false);
       }
       if (bodyweights.length > 0) {
-        renderBodyweightChart(bodyweights);
+        ChartService.renderBodyweight('bodyweightChart', bodyweights);
       } else {
-        if (bodyweightChartInstance) { bodyweightChartInstance.destroy(); bodyweightChartInstance = null; }
+        if (chartInstances.bodyweight) { chartInstances.bodyweight.destroy(); chartInstances.bodyweight = null; }
       }
 
       const prByMove = {};
@@ -1335,179 +1378,101 @@
     }
   }
 
-  function renderVolumeChart(volumeTrends) {
-    const ctx = document.getElementById('volumeChart').getContext('2d');
-    if (volumeChartInstance) volumeChartInstance.destroy();
+  // ═══════ ChartService — deep module ═══════
+  // Interface: renderTrendChart(canvasId, data, title, beginAtZero), renderBodyweight(canvasId, data)
+  // Implementation hides: Chart.js config template, instance lifecycle, color mapping
 
-    const colors = { '深蹲 Squat': '#1565C0', '肩推 Press': '#2E7D32', '硬舉 Deadlift': '#E65100', '臥推 Bench': '#AD1457' };
-    const datasets = [];
-    const movementOrder = ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'];
-
-    const allDates = new Set();
-    movementOrder.forEach(move => {
-      if (volumeTrends[move]) {
-        Object.keys(volumeTrends[move]).forEach(d => allDates.add(d));
-      }
-    });
-    const sortedDates = [...allDates].sort();
-
-    movementOrder.forEach(move => {
-      if (volumeTrends[move] && Object.keys(volumeTrends[move]).length > 0) {
-        const data = sortedDates.map(d => ({ x: d, y: volumeTrends[move][d] || null }));
-        datasets.push({
-          label: move, data: data,
-          borderColor: colors[move], backgroundColor: colors[move],
-          pointRadius: 4, pointHoverRadius: 6,
-          borderWidth: 2.5, tension: 0.3,
-          spanGaps: true
-        });
-      }
-    });
-
-    volumeChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: { datasets: datasets },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          title: { display: true, text: '各動作訓練量趨勢', font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
-          legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Noto Sans TC', sans-serif" } } },
-          tooltip: {
-            backgroundColor: 'rgba(27,42,74,0.9)',
-            titleFont: { family: "'IBM Plex Mono', monospace" },
-            bodyFont: { family: "'IBM Plex Mono', monospace" },
-            cornerRadius: 8, padding: 10
-          }
-        },
-        scales: {
-          x: {
-            type: 'category', labels: sortedDates,
-            grid: { display: false },
-            ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D', maxRotation: 45 },
-            border: { display: false }
-          },
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(27,42,74,0.06)' },
-            ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' },
-            border: { display: false }
-          }
+  const ChartService = {
+    _colors: { '深蹲 Squat': '#1565C0', '肩推 Press': '#2E7D32', '硬舉 Deadlift': '#E65100', '臥推 Bench': '#AD1457' },
+    _movementOrder: ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'],
+    _chartOptions: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        title: { display: true, font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
+        legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Noto Sans TC', sans-serif" } } },
+        tooltip: {
+          backgroundColor: 'rgba(27,42,74,0.9)',
+          titleFont: { family: "'IBM Plex Mono', monospace" },
+          bodyFont: { family: "'IBM Plex Mono', monospace" },
+          cornerRadius: 8, padding: 10
         }
-      }
-    });
-  }
-
-  function renderWeightTrendChart(weightTrends) {
-    const ctx = document.getElementById('weightTrendChart').getContext('2d');
-    if (weightTrendChartInstance) weightTrendChartInstance.destroy();
-
-    const colors = { '深蹲 Squat': '#1565C0', '肩推 Press': '#2E7D32', '硬舉 Deadlift': '#E65100', '臥推 Bench': '#AD1457' };
-    const datasets = [];
-    const movementOrder = ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'];
-
-    const allDates = new Set();
-    movementOrder.forEach(move => {
-      if (weightTrends[move]) {
-        Object.keys(weightTrends[move]).forEach(d => allDates.add(d));
-      }
-    });
-    const sortedDates = [...allDates].sort();
-
-    movementOrder.forEach(move => {
-      if (weightTrends[move] && Object.keys(weightTrends[move]).length > 0) {
-        const data = sortedDates.map(d => ({ x: d, y: weightTrends[move][d] || null }));
-        datasets.push({
-          label: move, data: data,
-          borderColor: colors[move], backgroundColor: colors[move],
-          pointRadius: 4, pointHoverRadius: 6,
-          borderWidth: 2.5, tension: 0.3,
-          spanGaps: true
-        });
-      }
-    });
-
-    weightTrendChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: { datasets: datasets },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          title: { display: true, text: '各動作最大重量趨勢', font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
-          legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Noto Sans TC', sans-serif" } } },
-          tooltip: {
-            backgroundColor: 'rgba(27,42,74,0.9)',
-            titleFont: { family: "'IBM Plex Mono', monospace" },
-            bodyFont: { family: "'IBM Plex Mono', monospace" },
-            cornerRadius: 8, padding: 10
-          }
-        },
-        scales: {
-          x: {
-            type: 'category', labels: sortedDates,
-            grid: { display: false },
-            ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D', maxRotation: 45 },
-            border: { display: false }
-          },
-          y: {
-            beginAtZero: false,
-            grid: { color: 'rgba(27,42,74,0.06)' },
-            ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' },
-            border: { display: false }
-          }
-        }
-      }
-    });
-  }
-
-  function renderBodyweightChart(bodyweights) {
-    const ctx = document.getElementById('bodyweightChart').getContext('2d');
-    if (bodyweightChartInstance) bodyweightChartInstance.destroy();
-
-    const sorted = bodyweights.slice().reverse();
-    bodyweightChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: sorted.map(d => d.date.slice(5)),
-        datasets: [{
-          label: '體重 (kg)',
-          data: sorted.map(d => d.weight),
-          borderColor: '#00796B',
-          backgroundColor: 'rgba(0,121,107,0.08)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 4, pointHoverRadius: 6,
-          borderWidth: 2.5
-        }]
       },
-      options: {
-        responsive: true,
-        plugins: {
-          title: { display: true, text: '體重趨勢', font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(27,42,74,0.9)',
-            titleFont: { family: "'IBM Plex Mono', monospace" },
-            bodyFont: { family: "'IBM Plex Mono', monospace" },
-            cornerRadius: 8, padding: 10
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' },
-            border: { display: false }
-          },
-          y: {
-            grid: { color: 'rgba(27,42,74,0.06)' },
-            ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' },
-            border: { display: false }
-          }
-        }
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D', maxRotation: 45 }, border: { display: false } },
+        y: { grid: { color: 'rgba(27,42,74,0.06)' }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' }, border: { display: false } }
       }
-    });
-  }
+    },
+
+    _buildDatasets: function(trends) {
+      const datasets = [];
+      const allDates = new Set();
+      this._movementOrder.forEach(move => {
+        if (trends[move]) Object.keys(trends[move]).forEach(d => allDates.add(d));
+      });
+      const sortedDates = [...allDates].sort();
+
+      this._movementOrder.forEach(move => {
+        if (trends[move] && Object.keys(trends[move]).length > 0) {
+          datasets.push({
+            label: move,
+            data: sortedDates.map(d => ({ x: d, y: trends[move][d] || null })),
+            borderColor: this._colors[move], backgroundColor: this._colors[move],
+            pointRadius: 4, pointHoverRadius: 6,
+            borderWidth: 2.5, tension: 0.3, spanGaps: true
+          });
+        }
+      });
+      return { datasets, sortedDates };
+    },
+
+    renderTrendChart: function(canvasId, trends, title, beginAtZero) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+      const { datasets, sortedDates } = this._buildDatasets(trends);
+      chartInstances[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: { datasets: datasets },
+        options: Object.assign({}, this._chartOptions, {
+          plugins: Object.assign({}, this._chartOptions.plugins, { title: { display: true, text: title, font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } } }),
+          scales: Object.assign({}, this._chartOptions.scales, {
+            x: Object.assign({}, this._chartOptions.scales.x, { type: 'category', labels: sortedDates }),
+            y: Object.assign({}, this._chartOptions.scales.y, { beginAtZero: beginAtZero })
+          })
+        })
+      });
+    },
+
+    renderBodyweight: function(canvasId, bodyweights) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+      const sorted = bodyweights.slice().reverse();
+      chartInstances[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: sorted.map(d => d.date.slice(5)),
+          datasets: [{
+            label: '體重 (kg)', data: sorted.map(d => d.weight),
+            borderColor: '#00796B', backgroundColor: 'rgba(0,121,107,0.08)',
+            fill: true, tension: 0.3,
+            pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5
+          }]
+        },
+        options: Object.assign({}, this._chartOptions, {
+          plugins: Object.assign({}, this._chartOptions.plugins, {
+            title: { display: true, text: '體重趨勢', font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
+            legend: { display: false }
+          }),
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' }, border: { display: false } },
+            y: { grid: { color: 'rgba(27,42,74,0.06)' }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' }, border: { display: false } }
+          }
+        })
+      });
+    }
+  };
 
   // ═══════ 體重紀錄 ═══════
   async function saveBodyWeight() {
@@ -1517,7 +1482,7 @@
 
     showLoader('儲存體重中...');
     try {
-      const msg = await fetchAPI('saveBodyWeight', { bodyData: { date, weight: Number(weight) } });
+      const msg = await API.post('saveBodyWeight', { bodyData: { date, weight: Number(weight) } });
       hideLoader();
       showAlert(msg);
       renderStatistics();
@@ -1539,7 +1504,7 @@
 
     showLoader('更新密碼中...');
     try {
-      const msg = await fetchAPI('changePassword', { oldPassword: oldPwd, newPassword: newPwd });
+      const msg = await API.post('changePassword', { oldPassword: oldPwd, newPassword: newPwd });
       hideLoader();
       showAlert(msg);
       document.getElementById('oldPwd').value = '';
@@ -1560,7 +1525,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=14', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=17', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
