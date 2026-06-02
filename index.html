@@ -1167,8 +1167,8 @@
     for (let i = 0; i < 28; i++) {
       let checkDate = new Date(startMonday);
       checkDate.setDate(startMonday.getDate() + i);
-      let y = checkDate.getFullYear(), m = String(checkDate.getMonth() + 1).padStart(2, '0'), d = String(checkDate.getDate()).padStart(2, '0');
-      if (allEvents[`${y}-${m}-${d}`]) { hasOverlap = true; break; }
+      let checkDateStr = getLocalDateString(checkDate);
+      if (allEvents[checkDateStr]) { hasOverlap = true; break; }
     }
 
     if (hasOverlap) {
@@ -1258,7 +1258,7 @@
     display.innerText = `${year}/${month + 1}`;
     const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const todayStr = getLocalDateString(today);
 
     for(let i=0; i<firstDay; i++) container.innerHTML += `<div class="cal-day bg-light"></div>`;
     for(let d=1; d<=daysInMonth; d++) {
@@ -1521,15 +1521,16 @@
   }
 
   // 本地日期字串 (yyyy-MM-dd)，避免 toISOString() 回傳 UTC 日期
-  function getLocalDateString() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  // 不傳參數 → 當天，傳 Date 物件 → 該日期
+  function getLocalDateString(d) {
+    const date = d || new Date();
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
   }
 
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=20', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=21', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
