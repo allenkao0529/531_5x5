@@ -355,10 +355,19 @@
       border: 1px solid #FFE082;
       border-left: 4px solid #F9A825;
     }
+    .workout-card.is-extra .workout-input-group input {
+      border-style: dashed;
+      background: #FFFDE7;
+    }
     .extra-badge {
       display: inline-block; background: #F9A825; color: #fff;
       font-size: 10px; font-weight: 700; padding: 2px 8px;
       border-radius: 10px; margin-left: 6px; letter-spacing: 0.5px;
+    }
+    .extra-label {
+      display: inline-block; background: #FFF3C7; color: #F57F17;
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 6px; margin-left: 6px; border: 1px solid #FFE082;
     }
 
     /* ── 加一組按鈕 ── */
@@ -1102,11 +1111,11 @@
       html += `
         <div class="workout-card${isExtra ? ' is-extra' : ''}">
           <div class="workout-card-header">
-            <span class="workout-move-name">${item.movement}</span>
+            <span class="workout-move-name">${item.movement}${isExtra ? '<span class="extra-label">⚡ 追加組</span>' : ''}</span>
             <span class="workout-set-badge">${item.set}${isExtra ? '<span class="extra-badge">追加</span>' : ''}</span>
           </div>
           <div class="workout-plan">
-            ${item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span class="text-muted-custom" style="font-size:12px; color: #F9A825;">⚡ 追加組</span>'}
+            ${item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span style="font-size:12px; color: #F9A825; font-weight: 700;">⚡ 追加組 — 無原訂重量/次數</span>'}
           </div>
           <div class="workout-inputs">
             <div class="workout-input-group" style="flex:1.5;">
@@ -1123,7 +1132,7 @@
             </div>
           </div>
           ${item.isLogged === 'V' ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${item.est1RM > 0 ? Math.round(item.est1RM) : '-'}</strong> kg</span></div>` : ''}
-          ${isSet3 && item.isLogged !== 'V' ? '<button class="add-extra-btn" data-movement="' + item.movement + '" data-date="' + item.date + '"><span class="icon">+</span> 加一組</button>' : ''}
+          ${isSet3 && item.isLogged === 'V' ? '<button class="add-extra-btn" onclick="doAddExtraSet(\'' + item.date + '\',\'' + item.movement + '\',this)"><span class="icon">+</span> 加一組</button>' : ''}
         </div>`;
     });
 
@@ -1618,7 +1627,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=23', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=24', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
