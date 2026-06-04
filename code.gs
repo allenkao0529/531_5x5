@@ -564,7 +564,8 @@ function logWorkout(logData) {
   }
 
   // 判斷是否為追加組（3D/3E/3F...）
-  var isExtra = set.indexOf('Set 3') === 0 && 'ABC'.indexOf(set.charAt(set.length - 1)) < 0;
+  // Set 3 = 原訂，Set 3A/3B/3C... = 追加組
+  var isExtra = set.indexOf('Set 3') === 0 && set.length > 6;
 
   if (isExtra) {
     // 追加組：一律新增一筆 Workout_Log（不覆蓋前一組）
@@ -586,8 +587,21 @@ function logWorkout(logData) {
     }
   }
 
-  // 更新 Program_Plan
-  progSheet.getRange(rowIdx, 8, 1, 3).setValues([['V', actW, actR]]);
+  // 更新 Program_Plan：先用前端 rowIdx，失敗則搜尋正確列
+  try {
+    progSheet.getRange(rowIdx, 8, 1, 3).setValues([['V', actW, actR]]);
+  } catch (e) {
+    // rowIdx 不正確時，搜尋該日期/動作/組數的正確列
+    const progData = progSheet.getDataRange().getValues();
+    for (let i = progData.length - 1; i >= 1; i--) {
+      if (DateUtil.formatDate(progData[i][0]) === dateStr &&
+          String(progData[i][2]) === move &&
+          String(progData[i][3]) === set) {
+        progSheet.getRange(i + 1, 8, 1, 3).setValues([['V', actW, actR]]);
+        break;
+      }
+    }
+  }
 
   // 檢查是否創 PR
   let prTypes = checkAndRecordPR(dateStr, move, actW, actR);
@@ -613,24 +627,33 @@ function addExtraSet(logData) {
   }
 
   // 找出該日期/動作最後一組 Set 3（3A/3B/3C/3D...）
+  // Set 3 = 原訂最後一組，Set 3A/3B/3C... = 追加組
   const data = readAllProgramData();
   var lastSet3Data = null;
-  var maxLetterIdx = -1; // A=0, B=1, C=2...
+  var hasSet3 = false; // 是否有原訂 Set 3
+  var maxLetterIdx = -1; // 追加組字母：A=0, B=1, C=2...
   var extraCount = 0;
   for (var i = data.length - 1; i >= 0; i--) {
     var r = data[i];
-    if (String(r[0]) === dateStr && String(r[2]) === move && String(r[3]).indexOf('Set 3') === 0) {
-      var letter = String(r[3]).charCodeAt(String(r[3]).length - 1) - 65; // A=0, B=1, C=2...
-      if (letter > maxLetterIdx) {
-        maxLetterIdx = letter;
-        lastSet3Data = r; // 最後一組（倒序遍歷第一個）
+    var setStr = String(r[3]);
+    if (String(r[0]) === dateStr && String(r[2]) === move && setStr.indexOf('Set 3') === 0) {
+      if (setStr === 'Set 3') {
+        hasSet3 = true;
+        lastSet3Data = r;
+      } else if (setStr.length > 6) {
+        // 追加組：Set 3A, 3B, 3C...
+        var letter = setStr.charCodeAt(setStr.length - 1) - 65; // A=0, B=1, C=2...
+        if (letter > maxLetterIdx) {
+          maxLetterIdx = letter;
+          lastSet3Data = r;
+        }
+        extraCount++;
       }
-      if (letter > 2) extraCount++; // 追加組（3D=3, 3E=4...）
     }
   }
 
-  if (!lastSet3Data) {
-    throw new Error('找不到該日期的 Set 3');
+  if (!hasSet3) {
+    throw new Error('找不到該日期的 Set 3。請確認課表已生成且該日期/動作存在 Set 3。資料筆數：' + data.length);
   }
 
   // 限制最多 5 組追加（3D/3E/3F/3G/3H）
