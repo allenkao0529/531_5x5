@@ -1104,13 +1104,10 @@
         html += `<div class="warmup-block"><div class="warmup-label">🔥 暖身組</div><div class="warmup-detail">${item.warmupWeight}</div></div>`;
       }
 
-      // 判斷是否為追加組（Set 3+ 且 set 欄位不是原訂的 3A/3B/3C）
-      var isExtra = item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) < 0;
-      var isSet3 = item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) >= 0;
-
-      if (item.set.indexOf('Set 3') === 0) {
-        console.log('[Set 3]', { i, set: item.set, isSet3: isSet3, isExtra: isExtra, isLogged: item.isLogged, btnCondition: isSet3 && item.isLogged === 'V' });
-      }
+      // 判斷是否為追加組（Set 3 完成後可追加 3A/3B/3C...）
+      // Set 3 是原訂最後一組，Set 3A/3B/3C... 是追加組
+      var isSet3 = item.set === 'Set 3';
+      var isExtra = item.set.indexOf('Set 3') === 0 && item.set.length > 6; // 'Set 3A' 長度 7，'Set 3' 長度 6
 
       html += `
         <div class="workout-card${isExtra ? ' is-extra' : ''}">
@@ -1143,7 +1140,7 @@
     // 統計每個動作的追加組數量，超過 5 組隱藏「加一組」按鈕
     var extraCount = {};
     data.forEach(function(item) {
-      if (item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) < 0) {
+      if (item.set.indexOf('Set 3') === 0 && item.set.length > 6) {
         var key = item.date + '|' + item.movement;
         extraCount[key] = (extraCount[key] || 0) + 1;
       }
@@ -1631,7 +1628,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=26', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=27', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
