@@ -1108,6 +1108,10 @@
       var isExtra = item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) < 0;
       var isSet3 = item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) >= 0;
 
+      if (item.set.indexOf('Set 3') === 0) {
+        console.log('[Set 3]', { i, set: item.set, isSet3: isSet3, isExtra: isExtra, isLogged: item.isLogged, btnCondition: isSet3 && item.isLogged === 'V' });
+      }
+
       html += `
         <div class="workout-card${isExtra ? ' is-extra' : ''}">
           <div class="workout-card-header">
@@ -1627,7 +1631,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=24', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=26', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
