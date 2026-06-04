@@ -349,6 +349,31 @@
     }
     .est-1rm-display .mono { font-weight: 600; }
 
+    /* ── 追加組（Set 3+） ── */
+    .workout-card.is-extra {
+      background: linear-gradient(135deg, #FFFDF5 0%, #FFF9EB 100%);
+      border: 1px solid #FFE082;
+      border-left: 4px solid #F9A825;
+    }
+    .extra-badge {
+      display: inline-block; background: #F9A825; color: #fff;
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 10px; margin-left: 6px; letter-spacing: 0.5px;
+    }
+
+    /* ── 加一組按鈕 ── */
+    .add-extra-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 10px; padding: 6px 14px;
+      background: var(--bg); border: 1px dashed var(--border);
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      color: var(--muted); cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .add-extra-btn:hover { background: #FFF8E1; border-color: #F9A825; color: #F57F17; }
+    .add-extra-btn:active { transform: scale(0.97); }
+    .add-extra-btn .icon { font-size: 14px; }
+
     /* ── 樂觀更新：同步中動畫 ── */
     .workout-btn.btn-syncing {
       animation: syncPulse 1.2s ease-in-out infinite;
@@ -893,9 +918,11 @@
     _maxRetries: 1,
 
     _classify: function(result) {
-      if (result.error && result.error.toLowerCase().includes('密碼')) throw new AuthError(result.error);
-      if (result.error && result.error.toLowerCase().includes('未知')) throw new ValidationError(result.error);
-      throw new Error(result.error);
+      var code = result.error_code;
+      var msg = result.error || '未知錯誤';
+      if (code === 'AUTH_ERROR' || (!code && msg.toLowerCase().includes('密碼'))) throw new AuthError(msg);
+      if (code === 'VALIDATION_ERROR' || (!code && msg.toLowerCase().includes('未知'))) throw new ValidationError(msg);
+      throw new Error(msg);
     },
 
     _request: async function(action, data) {
@@ -946,6 +973,27 @@
     }
   };
 
+  // ═══════ Tab 配置 — deep module ═══════
+  // Interface: TABS (read-only list of tab IDs)
+  // Implementation hides: tab DOM id suffixes, tab-specific lazy load hooks
+
+  var TABS = ['log', 'cal', 'gen', 'set', 'stat'];
+
+  var TAB_HOOKS = {
+    'cal': function() { renderCalendar(); },
+    'stat': function() { renderStatistics(); }
+  };
+
+  function showTab(id, el) {
+    TABS.forEach(function(t) {
+      var tab = document.getElementById('tab-' + t);
+      if (tab) tab.style.display = (t === id) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    el.classList.add('active');
+    if (TAB_HOOKS[id]) TAB_HOOKS[id]();
+  }
+
   // ═══════ UI 共用 ═══════
   let appModal;
   window.addEventListener('DOMContentLoaded', () => {
@@ -972,17 +1020,6 @@
 
   function showLoader(text = '處理中...') { document.getElementById('loaderText').innerText = text; document.getElementById('loader').style.display = 'flex'; }
   function hideLoader() { document.getElementById('loader').style.display = 'none'; }
-
-  function showTab(id, el) {
-    ['log','cal','gen','set','stat'].forEach(t => {
-      const tab = document.getElementById('tab-'+t);
-      if (tab) tab.style.display = (t === id) ? 'block' : 'none';
-    });
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
-    if(id === 'cal') renderCalendar();
-    if(id === 'stat') renderStatistics();
-  }
 
   // ═══════ 設定 UI ═══════
   function renderSettingsUI() {
@@ -1058,14 +1095,18 @@
         html += `<div class="warmup-block"><div class="warmup-label">🔥 暖身組</div><div class="warmup-detail">${item.warmupWeight}</div></div>`;
       }
 
+      // 判斷是否為追加組（Set 3+ 且 set 欄位不是原訂的 3A/3B/3C）
+      var isExtra = item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) < 0;
+      var isSet3 = item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) >= 0;
+
       html += `
-        <div class="workout-card">
+        <div class="workout-card${isExtra ? ' is-extra' : ''}">
           <div class="workout-card-header">
             <span class="workout-move-name">${item.movement}</span>
-            <span class="workout-set-badge">${item.set}</span>
+            <span class="workout-set-badge">${item.set}${isExtra ? '<span class="extra-badge">追加</span>' : ''}</span>
           </div>
           <div class="workout-plan">
-            原訂 <strong>${item.targetWeight}kg × ${item.targetReps}</strong> <span class="text-muted-custom" style="font-size:11px;">(${item.percent || '-'})</span>
+            ${item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span class="text-muted-custom" style="font-size:12px; color: #F9A825;">⚡ 追加組</span>'}
           </div>
           <div class="workout-inputs">
             <div class="workout-input-group" style="flex:1.5;">
@@ -1078,11 +1119,30 @@
             </div>
             <div class="workout-input-group" style="flex:4.5;">
               <label>&nbsp;</label>
-              <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-navy'}" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
+              <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-navy'}" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}','${item.set}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
-          ${item.isLogged === 'V' ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${Math.round(Math.min(Number(item.actualWeight) * (1 + Number(item.actualReps.replace('+','')) / 30), Number(item.actualWeight) * 1.25))}</strong> kg</span></div>` : ''}
+          ${item.isLogged === 'V' ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${item.est1RM > 0 ? Math.round(item.est1RM) : '-'}</strong> kg</span></div>` : ''}
+          ${isSet3 && item.isLogged !== 'V' ? '<button class="add-extra-btn" data-movement="' + item.movement + '" data-date="' + item.date + '"><span class="icon">+</span> 加一組</button>' : ''}
         </div>`;
+    });
+
+    // 統計每個動作的追加組數量，超過 5 組隱藏「加一組」按鈕
+    var extraCount = {};
+    data.forEach(function(item) {
+      if (item.set.indexOf('Set 3') === 0 && 'ABC'.indexOf(item.set.charAt(item.set.length - 1)) < 0) {
+        var key = item.date + '|' + item.movement;
+        extraCount[key] = (extraCount[key] || 0) + 1;
+      }
+    });
+    document.querySelectorAll('.add-extra-btn').forEach(function(btn) {
+      var key = btn.getAttribute('data-date') + '|' + btn.getAttribute('data-movement');
+      var remaining = 5 - (extraCount[key] || 0);
+      if (remaining <= 0) {
+        btn.style.display = 'none';
+      } else {
+        btn.innerHTML = '<span class="icon">+</span> 加一組 (剩 ' + remaining + ' 組)';
+      }
     });
 
     // 移動課表
@@ -1153,15 +1213,15 @@
     } catch(err) { hideLoader(); showAlert('產生失敗：' + err.message); }
   }
 
-  function generate() {
+  async function generate() {
     const sd = document.getElementById('startDate').value;
     const inc = document.getElementById('incCheck').checked;
     const tmRatio = document.querySelector('input[name="tmRatio"]:checked').value;
     const progType = document.querySelector('input[name="progType"]:checked').value;
 
-    let baseDate = new Date(sd);
-    let diff = baseDate.getDate() - baseDate.getDay() + (baseDate.getDay() == 0 ? -6 : 1);
-    let startMonday = new Date(baseDate.setDate(diff));
+   let mondayStr = await API.post('calcNextMonday', { date: sd });
+   let [y, m, d] = mondayStr.split('-');
+   let startMonday = new Date(+y, +m - 1, +d);
 
     let hasOverlap = false;
     for (let i = 0; i < 28; i++) {
@@ -1178,7 +1238,7 @@
     }
   }
 
-  async function doLog(i, row, d, m) {
+  async function doLog(i, row, d, m, set) {
     const awEl = document.getElementById('aw-'+i), arEl = document.getElementById('ar-'+i), btn = document.getElementById('btn-'+i);
     const card = btn.closest('.workout-card');
     const aw = awEl.value, ar = arEl.value;
@@ -1201,7 +1261,7 @@
     // ── 背景寫入 API ──
     let result;
     try {
-      result = await API.post('logWorkout', { logData: { rowIdx: row, date: d, movement: m, actualWeight: aw, actualReps: ar } });
+      result = await API.post('logWorkout', { logData: { rowIdx: row, date: d, movement: m, set: set, actualWeight: aw, actualReps: ar } });
     } catch(err) {
       // ── 寫入失敗：回滾 ──
       btn.className = prevClassName;
@@ -1231,6 +1291,34 @@
 
     if (result.pr && result.pr.length > 0) {
       showPRCelebration(result.pr);
+    }
+  }
+
+  // ── 為 Set 3 追加一組 ──
+  async function doAddExtraSet(date, movement, btnEl) {
+    var newWeight = prompt('💪 新增追加組\n\n原訂 Set 3 已完成\n\n請輸入重量 (kg):');
+    if (newWeight === null) return;
+    newWeight = Number(newWeight.trim());
+    if (newWeight <= 0) return showAlert('重量必須大於 0');
+
+    var newReps = prompt('請輸入次數:', '1');
+    if (newReps === null) return;
+    newReps = Number(newReps.trim());
+    if (newReps <= 0) return showAlert('次數必須大於 0');
+
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span class="icon">⏳</span> 儲存中...';
+
+    try {
+      var result = await API.post('addExtraSet', {
+        logData: { date: date, movement: movement, actualWeight: newWeight, actualReps: newReps }
+      });
+      showAlert('✅ ' + result.message + '：' + newWeight + 'kg × ' + newReps + ' 組');
+      loadWorkouts(); // 重新載入 → 新組顯示為黃色追加組
+    } catch(err) {
+      showAlert('新增失敗：' + err.message);
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<span class="icon">+</span> 加一組';
     }
   }
 
@@ -1530,7 +1618,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=21', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=23', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });
