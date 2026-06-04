@@ -370,6 +370,29 @@
       border-radius: 6px; margin-left: 6px; border: 1px solid #FFE082;
     }
 
+    /* ── 追加組輸入-dialog ── */
+    .extra-set-form label {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      margin-bottom: 4px; display: block;
+    }
+    .extra-set-form .form-row {
+      display: flex; gap: 12px; margin-bottom: 16px;
+    }
+    .extra-set-form .form-field {
+      flex: 1;
+    }
+    .extra-set-form input[type="number"] {
+      width: 100%; text-align: center; font-size: 20px; font-weight: 700;
+      padding: 8px; border: 2px solid var(--border); border-radius: 8px;
+      background: #fff; color: var(--dark);
+    }
+    .extra-set-form input[type="number"]:focus {
+      outline: none; border-color: var(--primary);
+    }
+    .extra-set-form .unit {
+      font-size: 11px; color: var(--muted); text-align: center; margin-top: 2px;
+    }
+
     /* ── 加一組按鈕 ── */
     .add-extra-btn {
       display: inline-flex; align-items: center; gap: 4px;
@@ -1305,31 +1328,58 @@
   }
 
   // ── 為 Set 3 追加一組 ──
-  async function doAddExtraSet(date, movement, btnEl) {
-    var newWeight = prompt('💪 新增追加組\n\n原訂 Set 3 已完成\n\n請輸入重量 (kg):');
-    if (newWeight === null) return;
-    newWeight = Number(newWeight.trim());
-    if (newWeight <= 0) return showAlert('重量必須大於 0');
+  function doAddExtraSet(date, movement, btnEl) {
+    var body = '<div class="extra-set-form">' +
+      '<div style="text-align:center;font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px;">💪 新增追加組</div>' +
+      '<div class="form-row">' +
+        '<div class="form-field">' +
+          '<label>重量 (kg)</label>' +
+          '<input type="number" id="extraWeight" min="0" step="2.5" value="0" inputmode="decimal">' +
+          '<div class="unit">kg</div>' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label>次數</label>' +
+          '<input type="number" id="extraReps" min="0" step="1" value="0" inputmode="numeric">' +
+          '<div class="unit">次</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;">預設 0 = 留空自行設定</div>' +
+    '</div>';
 
-    var newReps = prompt('請輸入次數:', '1');
-    if (newReps === null) return;
-    newReps = Number(newReps.trim());
-    if (newReps <= 0) return showAlert('次數必須大於 0');
+    var footer = '<button type="button" class="btn btn-light border w-100 mb-2" data-bs-dismiss="modal">取消</button>' +
+      '<button type="button" class="btn btn-navy w-100 m-0" id="extraSetConfirmBtn">新增</button>';
 
-    btnEl.disabled = true;
-    btnEl.innerHTML = '<span class="icon">⏳</span> 儲存中...';
+    document.getElementById('customModalBody').innerHTML = body;
+    document.getElementById('customModalFooter').innerHTML = footer;
 
-    try {
-      var result = await API.post('addExtraSet', {
+    document.getElementById('extraSetConfirmBtn').onclick = function() {
+      appModal.hide();
+      var newWeight = Number(document.getElementById('extraWeight').value) || 0;
+      var newReps = Number(document.getElementById('extraReps').value) || 0;
+      if (newWeight <= 0 || newReps <= 0) return showAlert('重量與次數都必須大於 0');
+
+      btnEl.disabled = true;
+      btnEl.innerHTML = '<span class="icon">⏳</span> 儲存中...';
+
+      API.post('addExtraSet', {
         logData: { date: date, movement: movement, actualWeight: newWeight, actualReps: newReps }
+      }).then(function(result) {
+        showAlert('✅ ' + result.message + '：' + newWeight + 'kg × ' + newReps + ' 組');
+        loadWorkouts();
+      }).catch(function(err) {
+        showAlert('新增失敗：' + err.message);
+        btnEl.disabled = false;
+        btnEl.innerHTML = '<span class="icon">+</span> 加一組';
       });
-      showAlert('✅ ' + result.message + '：' + newWeight + 'kg × ' + newReps + ' 組');
-      loadWorkouts(); // 重新載入 → 新組顯示為黃色追加組
-    } catch(err) {
-      showAlert('新增失敗：' + err.message);
-      btnEl.disabled = false;
-      btnEl.innerHTML = '<span class="icon">+</span> 加一組';
-    }
+    };
+
+    // 預設聚焦重量欄位，支援 Enter 鍵送出
+    setTimeout(function() {
+      var wInput = document.getElementById('extraWeight');
+      if (wInput) { wInput.focus(); wInput.select(); }
+    }, 100);
+
+    appModal.show();
   }
 
   async function saveSet() {
@@ -1628,7 +1678,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=28', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=29', { scope: './' })
         .then((reg) => { console.log('SW registered:', reg.scope); })
         .catch((err) => { console.log('SW registration failed:', err); });
     });

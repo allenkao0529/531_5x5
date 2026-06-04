@@ -1,4 +1,4 @@
-const CACHE_NAME = '531-app-v28';
+const CACHE_NAME = '531-app-v29';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
