@@ -612,7 +612,7 @@ function logWorkout(logData) {
   return { message: "記錄完成", est1RM: est1RM, pr: prTypes };
 }
 
-// 為 Set 3 追加一組（3D/3E/3F...）
+// 為 Set 3 追加一組（3A/3B/3C...）
 function addExtraSet(logData) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const progSheet = ss.getSheetByName('Program_Plan');
@@ -626,17 +626,16 @@ function addExtraSet(logData) {
     throw new Error('重量和次數必須大於 0');
   }
 
-  // 找出該日期/動作最後一組 Set 3（3A/3B/3C/3D...）
-  // Set 3 = 原訂最後一組，Set 3A/3B/3C... = 追加組
-  const data = readAllProgramData();
+  // 直接讀 spreadsheet（不走 readAllProgramData 快取，避免連續追加時找不到上一組）
+  const progData = progSheet.getDataRange().getValues();
   var lastSet3Data = null;
   var hasSet3 = false; // 是否有原訂 Set 3
   var maxLetterIdx = -1; // 追加組字母：A=0, B=1, C=2...
   var extraCount = 0;
-  for (var i = data.length - 1; i >= 0; i--) {
-    var r = data[i];
+  for (var i = progData.length - 1; i >= 1; i--) {
+    var r = progData[i];
     var setStr = String(r[3]);
-    if (String(r[0]) === dateStr && String(r[2]) === move && setStr.indexOf('Set 3') === 0) {
+    if (DateUtil.formatDate(r[0]) === dateStr && String(r[2]) === move && setStr.indexOf('Set 3') === 0) {
       if (setStr === 'Set 3') {
         hasSet3 = true;
         lastSet3Data = r;
@@ -653,7 +652,7 @@ function addExtraSet(logData) {
   }
 
   if (!hasSet3) {
-    throw new Error('找不到該日期的 Set 3。請確認課表已生成且該日期/動作存在 Set 3。資料筆數：' + data.length);
+    throw new Error('找不到該日期的 Set 3。請確認課表已生成且該日期/動作存在 Set 3。');
   }
 
   // 限制最多 5 組追加（3D/3E/3F/3G/3H）
