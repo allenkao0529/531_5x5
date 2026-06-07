@@ -1116,15 +1116,15 @@
           <div class="workout-inputs">
             <div class="workout-input-group" style="flex:1.5;">
               <label>重量</label>
-              <input type="number" id="aw-'+i+'" class="mono" value="${item.actualWeight}">
+              <input type="number" id="aw-${i}" class="mono" value="${item.actualWeight}">
             </div>
             <div class="workout-input-group" style="flex:1;">
               <label>次數</label>
-              <input type="number" id="ar-'+i+'" class="mono" value="${item.actualReps.replace('+','')}">
+              <input type="number" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}">
             </div>
             <div class="workout-input-group" style="flex:4.5;">
               <label>&nbsp;</label>
-              <button id="btn-'+i+'" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-log'}" onclick="doLog('+i+','\''+item.rowIdx+'\''+'\''+item.date+'\''+'\''+item.movement+'\''+'\''+item.set+'\')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
+              <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-log'}" onclick="doLog(${i}, '${item.rowIdx}', '${item.date}', '${item.movement}', '${item.set}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
           ${item.isLogged === 'V' ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${item.est1RM > 0 ? Math.round(item.est1RM) : '-'}</strong> kg</span></div>` : ''}
