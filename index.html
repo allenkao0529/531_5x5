@@ -352,7 +352,7 @@
     .workout-move-name { font-weight: 700; font-size: 16px; color: var(--text-charcoal); }
     .workout-set-badge {
       background: var(--border-pencil); color: var(--text-charcoal);
-      padding: 4px 12px; font-size: 10px; font-weight: 700;
+      padding: 4px 12px; font-size: 12px; font-weight: 700;
       letter-spacing: 1px; border-radius: 20px;
     }
     .workout-plan { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
@@ -361,7 +361,7 @@
     .workout-inputs { display: flex; gap: 10px; align-items: flex-end; }
     .workout-input-group { flex: 1; }
     .workout-input-group label {
-      display: block; font-size: 10px; color: var(--text-muted);
+      display: block; font-size: 13px; color: var(--text-muted);
       margin-bottom: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     }
     .workout-input-group input {
@@ -490,7 +490,7 @@
       font-family: 'Share Tech Mono', monospace;
     }
     .stat-card .stat-label {
-      font-size: 10px; color: var(--text-muted);
+      font-size: 14px; color: var(--text-muted);
       font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
     }
 
@@ -498,9 +498,15 @@
     .chart-container {
       background: var(--bg-panel);
       border: 2px solid var(--border-pencil);
-      border-radius: 12px; padding: 16px; margin-bottom: 12px;
+      border-radius: 12px; padding: 10px; margin-bottom: 10px;
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
     }
-
+    .chart-container canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
     /* ── PR Badge ── */
     .pr-badge {
       display: inline-block; background: var(--accent-orange); color: #FFFFFF;
@@ -560,10 +566,11 @@
     /* ── 表單通用 ── */
     input[type="date"], input[type="number"], input[type="password"], input[type="text"] {
       border: 1.5px dashed var(--border-pencil);
-      border-radius: 10px; padding: 12px 14px;
+      border-radius: 10px; padding: 10px 12px;
       font-size: 14px; font-family: 'Libre Baskerville', serif;
       background: var(--bg-cream); color: var(--text-charcoal);
       transition: all 0.2s ease;
+      box-sizing: border-box;
     }
     input:focus { outline: none; border-color: var(--accent-orange); box-shadow: 0 0 10px rgba(217, 87, 40, 0.25); background: #FFFFFF; }
     input::placeholder { color: var(--text-muted); }
@@ -638,11 +645,11 @@
     .save-btn:active { transform: scale(0.98); }
 
     /* ── 空狀態 ── */
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 13px; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 20px; }
     .empty-state::before { content: '⚠️ '; font-size: 32px; display: block; margin-bottom: 12px; color: var(--accent-orange); }
 
     /* ── 表單標籤 ── */
-    .form-label-sm { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .form-label-sm { font-size: 13px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
     .form-check-input:checked { background-color: var(--accent-orange); border-color: var(--accent-orange); }
     .form-check-input:focus { box-shadow: 0 0 0 3px rgba(217, 87, 40, 0.2); border-color: var(--accent-orange); }
 
@@ -813,7 +820,7 @@
           <div class="col-3"><div class="stat-card"><div class="stat-value mono" id="statRecent">0</div><div class="stat-label">近 30 天訓練天</div></div></div>
           <div class="col-3"><div class="stat-card"><div class="stat-value mono" id="statPRs">0</div><div class="stat-label">PR 總數</div></div></div>
         </div>
-        <div class="chart-container"><canvas id="volumeChart" height="200"></canvas></div>
+        <div class="chart-container"><canvas id="volumeChart" height="250"></canvas></div>
         <div class="chart-container"><canvas id="weightTrendChart" height="250"></canvas></div>
       </div>
       <div id="statEmpty" class="empty-state">
@@ -839,7 +846,7 @@
               </div>
             </div>
           </div>
-          <div class="chart-container"><canvas id="bodyweightChart" height="180"></canvas></div>
+          <div class="chart-container"><canvas id="bodyweightChart" height="200"></canvas></div>
         </div>
       </div>
 
@@ -1463,8 +1470,8 @@
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        title: { display: true, font: { size: 13, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
-        legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Libre Baskerville', serif" }, color: '#2C2C2C' } },
+        title: { display: true, font: { size: 15, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
+        legend: { labels: { usePointStyle: true, padding: 16, font: { size: 12, family: "'Libre Baskerville', serif" }, color: '#2C2C2C' } },
         tooltip: {
           backgroundColor: 'rgba(44, 44, 44, 0.95)',
           titleFont: { family: "'Share Tech Mono', monospace", color: '#FFFFFF' },
@@ -1474,7 +1481,7 @@
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 10, family: "'Share Tech Mono', monospace" }, color: '#2C2C2C', maxRotation: 45 }, border: { display: false, color: '#D4C4A8' } },
-        y: { grid: { color: 'rgba(212, 196, 168, 0.3)' }, ticks: { font: { size: 10, family: "'Share Tech Mono', monospace" }, color: '#2C2C2C' }, border: { display: false, color: '#D4C4A8' } }
+        y: { grid: { color: 'rgba(212, 196, 168, 0.3)' }, ticks: { font: { size: 12, family: "'Share Tech Mono', monospace" }, color: '#2C2C2C' }, border: { display: false, color: '#D4C4A8' } }
       }
     },
 
@@ -1516,8 +1523,8 @@
           ...baseOptions,
           plugins: {
             ...baseOptions.plugins,
-            title: { display: true, text: title, font: { size: 13, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
-            legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Libre Baskerville', serif" }, color: '#2C2C2C' } }
+            title: { display: true, text: title, font: { size: 15, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
+            legend: { labels: { usePointStyle: true, padding: 16, font: { size: 12, family: "'Libre Baskerville', serif" }, color: '#2C2C2C' } }
           },
           scales: {
             x: {
@@ -1544,7 +1551,7 @@
       chartInstances[canvasId] = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: sorted.map(d => d.date.slice(5)),
+          labels: sorted.map(d => d.date),
           datasets: [{
             label: '體重 (kg)', data: sorted.map(d => d.weight),
             borderColor: '#6B8C42', backgroundColor: 'rgba(107, 140, 66, 0.1)',
@@ -1556,14 +1563,20 @@
           ...this._chartOptions,
           plugins: {
             ...this._chartOptions.plugins,
-            title: { display: true, text: '體重趨勢', font: { size: 13, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
+            title: { display: true, text: '體重趨勢', font: { size: 15, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
             legend: { display: false }
           },
           scales: {
             x: {
               ...this._chartOptions.scales.x,
               grid: { display: false },
-              ticks: { ...this._chartOptions.scales.x.ticks, color: '#2C2C2C', border: { display: false } }
+              ticks: { 
+                ...this._chartOptions.scales.x.ticks,
+                color: '#2C2C2C',
+                border: { display: false },
+                maxRotation: 45,
+                minRotation: 45
+              }
             },
             y: {
               ...this._chartOptions.scales.y,
