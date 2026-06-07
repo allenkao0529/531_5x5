@@ -3,723 +3,682 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>531 課表管理系統</title>
+  <title>531 課表管理系統 - 手繪風格</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- 給 Apple iOS (iPhone/iPad) 辨識的 App Icon -->
   <link rel="apple-touch-icon" href="icon-180.png">
-
-  <!-- PWA: Manifest + 安裝提示 -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1B2A4A">
+  <meta name="theme-color" content="#FDFBF7">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="531 課表">
-
-  <!-- 給一般瀏覽器與 Android 辨識的網頁 Icon (Favicon) -->
   <link rel="icon" type="image/png" href="icon-512.png">
   <style>
+    /* ── 手繪色調系統 ── */
     :root {
-      /* ── 色彩系統 ── */
-      --bg:        #FAF8F5;
-      --surface:   #FFFFFF;
-      --navy:      #1B2A4A;
-      --navy-light:#2C4168;
-      --accent:    #C62828;
-      --accent-lt: #EF5350;
-      --teal:      #00796B;
-      --teal-lt:   #26A69A;
-      --muted:     #6B7B8D;
-      --border:    #E8E4DF;
-      --squats:    #1565C0;
-      --press:     #2E7D32;
-      --deadlift:  #E65100;
-      --bench:     #AD1457;
+      /* 主題顏色 */
+      --bg-cream:          #FDFBF7;
+      --bg-panel:          #FFFFFF;
+      --bg-surface:        #FFFBF5;
+      --border-pencil:     #D4C4A8;
+      --accent-orange:     #D95728;
+      --accent-orange-dark:#C64820;
+      --text-charcoal:     #2C2C2C;
+      --text-dark:         #1A1A1A;
+      --text-muted:        #666666;
+
+      /* 運動專用色 */
+      --squats:            #6B8C42;  /* Earthy green */
+      --press:             #C69C3D;  /* Mustard yellow */
+      --deadlift:          #E74C3C;  /* Bright red */
+      --bench:             #9B59B6;  /* Purple */
+      --extra-yellow:      #F39C12; /* Amber for better contrast */
+      --extra-bg:          #FFF3E0; /* Light orange for extra set background */
+      --extra-border:      #E67E22; /* Darker orange for extra set border */
     }
 
     * { box-sizing: border-box; }
 
+    /* ── 紙張紋理背景 ── */
     body {
-      background-color: var(--bg);
-      padding: 10px 10px 85px 10px;
-      font-family: 'Noto Sans TC', -apple-system, sans-serif;
+      background-color: var(--bg-cream);
+      background-image:
+        radial-gradient(#D4C4A8 1px, transparent 1px),
+        radial-gradient(#D4C4A8 1px, transparent 1px);
+      background-size: 20px 20px;
+      background-position: 0 0, 10px 10px;
+      padding: 0;
+      margin: 0;
+      font-family: 'Libre Baskerville', serif;
       font-size: 16px;
-      color: var(--navy);
-      -webkit-font-smoothing: antialiased;
+      color: var(--text-charcoal);
+      min-height: 100vh;
     }
 
     /* ── 數字等寬 ── */
-    .mono {
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
-      font-variant-numeric: tabular-nums;
-    }
+    .mono { font-family: 'Share Tech Mono', monospace; font-variant-numeric: tabular-nums; }
 
-    .content-wrapper { max-width: 600px; margin: 0 auto; }
-    .my-tab { display: block; }
+    .content-wrapper { max-width: 600px; margin: 0 auto; padding-bottom: 90px; }
 
-    /* ── 卡片 ── */
+    /* ── 卡片：手繪矩形風格 ── */
     .card {
-      border: none;
-      border-radius: 14px;
-      box-shadow: 0 1px 4px rgba(27,42,74,0.06), 0 4px 16px rgba(27,42,74,0.04);
-      margin-bottom: 16px;
-      overflow: hidden;
-      transition: transform 0.15s ease;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-pencil);
+      border-radius: 8px;
+      box-shadow: none;
+      margin-bottom: 20px;
+      position: relative;
+      transform: rotate(var(--tilt, 0deg));
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    /* ── 底部導航 ── */
+    .card:hover {
+      --tilt: -1deg;
+      transform: rotate(var(--tilt));
+      box-shadow: 4px 4px 12px rgba(212, 196, 168, 0.4);
+    }
+
+    /* 手繪邊緣效果 */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border: 1.5px solid var(--border-pencil);
+      border-radius: 8px;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.3;
+    }
+
+    /* ── 底部控制面板：手繪風格 ── */
     .bottom-nav {
       position: fixed; bottom: 0; width: 100%;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
+      background: var(--bg-panel);
+      border-top: 3px solid var(--accent-orange);
       display: flex; justify-content: space-around;
-      padding: 6px 0 10px 0; z-index: 1000;
+      padding: 10px 0; z-index: 1000;
+      box-shadow: -2px 2px 8px rgba(0,0,0,0.08);
+      transform: skewY(0deg);
+    }
+    .bottom-nav::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: repeating-linear-gradient(
+        45deg,
+        var(--accent-orange),
+        var(--accent-orange) 10px,
+        var(--accent-orange-dark) 10px,
+        var(--accent-orange-dark) 20px
+      );
+      pointer-events: none;
     }
     .nav-item {
-      text-align: center; color: var(--muted);
-      text-decoration: none; font-size: 11px;
-      flex: 1; transition: color 0.2s ease;
-      position: relative; padding-top: 4px;
+      text-align: center; color: var(--text-muted);
+      text-decoration: none; font-size: 13px;
+      flex: 1; transition: all 0.25s ease;
+      position: relative; padding-top: 6px;
     }
-    .nav-item .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
-    .nav-item.active {
-      color: var(--navy); font-weight: 700;
+    .nav-item .nav-icon {
+      font-size: 24px; display: block; margin-bottom: 4px;
+      font-weight: 700; position: relative;
     }
-    .nav-item.active::after {
-      content: ''; position: absolute;
-      bottom: -10px; left: 50%; transform: translateX(-50%);
-      width: 20px; height: 3px; border-radius: 2px;
-      background: var(--accent);
+    .nav-item .nav-icon::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      border: 1px solid var(--accent-orange);
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    .nav-item.active { color: var(--accent-orange); }
+    .nav-item.active .nav-icon::before {
+      background: rgba(217, 87, 40, 0.15);
+    }
+    .nav-item.active .nav-icon {
+      color: var(--accent-orange);
     }
 
-    /* ── 日曆 ── */
+    /* ── 日曆：便條紙風格 ── */
     .calendar-grid {
       display: grid; grid-template-columns: repeat(7, 1fr);
-      gap: 1px; background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
+      gap: 1px; background: var(--border-pencil);
+      border: 2px solid var(--border-pencil);
+      overflow: hidden;
     }
     #tab-cal { margin-left: 0; margin-right: 0; }
-    #tab-cal .card { border-radius: 0; box-shadow: none; }
+    #tab-cal .card { border-radius: 8px; box-shadow: none; }
     .cal-day {
-      background: var(--surface);
-      min-height: 80px; padding: 6px 4px;
+      background: var(--bg-cream);
+      min-height: 75px; padding: 6px 4px;
       font-size: 11px; position: relative;
-      transition: background 0.15s ease;
+      transition: background 0.2s ease;
     }
-    .cal-day:active { background: #f5f3f0; }
+    .cal-day:hover {
+      background: var(--bg-surface);
+      transform: scale(1.02);
+    }
     .cal-header {
-      background: var(--navy); color: #fff;
+      background: var(--accent-orange); color: #FFFFFF;
       text-align: center; font-weight: 700;
-      padding: 8px 2px; font-size: 11px;
-      letter-spacing: 0.5px;
+      padding: 8px 2px; font-size: 10px;
+      letter-spacing: 2px; border-bottom: 2px solid var(--accent-orange-dark);
+      font-family: 'Patrick Hand', cursive;
     }
-    .cal-today { background: #FFF8E1 !important; }
+    .cal-today { background: rgba(217, 87, 40, 0.15) !important; }
     .cal-today .cal-day-num {
-      background: var(--accent); color: #fff;
-      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent-orange); color: #FFFFFF;
+      width: 26px; height: 26px;
       display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 12px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
     }
-    .cal-day-num {
-      font-weight: 600; font-size: 12px;
-      display: block; margin-bottom: 2px;
-    }
+    .cal-day-num { font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; color: var(--text-charcoal); }
     .cal-event {
-      background: #E3F2FD; color: var(--squats);
-      border-radius: 5px; padding: 3px 5px;
-      margin-top: 2px; font-size: 9px;
-      line-height: 1.3; font-weight: 600;
-      border-left: 2px solid var(--squats);
-      transition: transform 0.1s ease;
+      background: rgba(255,255,255,0.5); color: var(--text-charcoal);
+      border: 1.5px solid var(--border-pencil);
+      padding: 4px 6px; margin-top: 2px; font-size: 9px;
+      line-height: 1.1; font-weight: 600;
+      transition: all 0.2s ease;
+      border-radius: 12px;
     }
-    .cal-event:active { transform: scale(0.97); }
-    .cal-event.move-deadlift { background: #FFF3E0; color: var(--deadlift); border-left-color: var(--deadlift); }
-    .cal-event.move-press  { background: #E8F5E9; color: var(--press); border-left-color: var(--press); }
-    .cal-event.move-bench  { background: #FCE4EC; color: var(--bench); border-left-color: var(--bench); }
+    .cal-event:hover {
+      transform: scale(1.05);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+    }
+    .cal-event.move-deadlift { border-color: var(--deadlift); background: rgba(168, 77, 63, 0.15); color: var(--deadlift); }
+    .cal-event.move-press  { border-color: var(--press); background: rgba(198, 156, 61, 0.15); color: var(--press); }
+    .cal-event.move-bench  { border-color: var(--bench); background: rgba(199, 92, 124, 0.15); color: var(--bench); }
+    .cal-event.move-squat  { border-color: var(--squats); background: rgba(107, 140, 66, 0.15); color: var(--squats); }
     .cal-done {
-      background: #E8F5E9 !important; color: var(--teal) !important;
-      border-left-color: var(--teal) !important;
-      opacity: 0.7;
+      background: rgba(107, 140, 66, 0.15) !important; color: var(--squats) !important;
+      border-color: var(--squats) !important;
+      opacity: 1;
     }
-    .cal-done::after { content: ' \2713'; font-weight: 900; }
-    .cal-week-tag {
-      font-size: 9px; color: var(--muted);
-      display: block; margin-bottom: 1px; font-weight: 700;
-    }
+    .cal-week-tag { font-size: 9px; color: var(--text-muted); display: block; margin-bottom: 1px; font-weight: 600; letter-spacing: 1px; font-family: 'Libre Baskerville', serif; }
 
-    /* ── Loader ── */
+    /* ── Loader：手繪旋轉圈 ── */
     #loader {
-      display: none; position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(250,248,245,0.92);
-      z-index: 9999; flex-direction: column;
-      align-items: center; justify-content: center;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(253, 251, 247, 0.98); z-index: 9999; flex-direction: column;
+      align-items: center; justify-content: center; border: 2px solid var(--accent-orange);
     }
     .loader-spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
+      width: 40px; height: 40px;
+      border: 3px solid var(--border-pencil);
+      border-top-color: var(--accent-orange);
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: spin 0.6s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     #loaderText {
-      font-weight: 500; color: var(--muted);
-      margin-top: 12px; font-size: 13px;
+      font-family: 'Libre Baskerville', serif; font-weight: 700; color: var(--accent-orange);
+      margin-top: 16px; font-size: 14px; letter-spacing: 2px;
     }
 
-    /* ── 登入畫面 ── */
+    /* ── 登入畫面：手繪風格 ── */
     #loginScreen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--navy);
+      background: var(--bg-cream);
+      background-image: radial-gradient(circle at center, #FDFBF7 0%, var(--bg-surface) 100%);
       z-index: 1000; display: flex;
       flex-direction: column; align-items: center; justify-content: center;
       padding: 24px;
       overflow: hidden;
     }
-    #loginScreen::before {
-      content: ''; position: absolute; top: -40%; right: -20%;
-      width: 500px; height: 500px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(198,40,40,0.15) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    #loginScreen::after {
-      content: ''; position: absolute; bottom: -30%; left: -15%;
-      width: 400px; height: 400px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,121,107,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
     .login-box {
-      background: var(--surface);
-      padding: 40px 32px 36px;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      width: 100%; max-width: 380px;
+      background: var(--bg-panel);
+      padding: 48px 32px;
+      border: 3px solid var(--accent-orange);
+      width: 100%; max-width: 400px;
       text-align: center;
-      position: relative; z-index: 1;
-      animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      box-shadow: 8px 8px 30px rgba(217, 87, 40, 0.15);
+      border-radius: 16px;
+      transform: rotate(-0.5deg);
     }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+    .login-box::before {
+      content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(217, 87, 40, 0.1) 10px,
+        rgba(217, 87, 40, 0.1) 20px
+      );
+      pointer-events: none;
+      z-index: -1;
+      border-radius: 18px;
     }
     .login-brand {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 56px; font-weight: 600;
-      color: var(--navy); line-height: 1;
-      margin-bottom: 4px; letter-spacing: -2px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 72px; font-weight: 700;
+      color: var(--text-charcoal); line-height: 1;
+      margin-bottom: 8px; letter-spacing: -3px;
     }
-    .login-brand span { color: var(--accent); }
+    .login-brand span { color: var(--accent-orange); }
     .login-subtitle {
-      font-size: 13px; color: var(--muted);
-      margin-bottom: 28px; font-weight: 400;
-      letter-spacing: 1px;
+      font-size: 14px; color: var(--text-muted);
+      margin-bottom: 32px; font-weight: 600; letter-spacing: 4px;
+      text-transform: uppercase; font-family: 'Libre Baskerville', serif;
     }
     .login-pwd {
-      -webkit-text-security: disc;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 16px;
-      font-family: 'IBM Plex Mono', monospace;
-      text-align: center;
-      letter-spacing: 4px;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      background: var(--bg);
+      border: 2px dashed var(--border-pencil);
+      border-radius: 12px;
+      padding: 16px 12px;
+      font-size: 20px;
+      font-family: 'Share Tech Mono', monospace;
+      text-align: center; letter-spacing: 6px;
+      background: var(--bg-cream); color: var(--text-charcoal);
+      transition: all 0.2s ease;
+      width: 100%; margin-bottom: 16px;
     }
     .login-pwd:focus {
       outline: none;
-      border-color: var(--navy);
-      box-shadow: 0 0 0 3px rgba(27,42,74,0.1);
+      border-color: var(--accent-orange);
+      box-shadow: 0 0 12px rgba(217, 87, 40, 0.25);
+      background: #FFFFFF;
     }
     .login-btn {
-      background: var(--navy); color: #fff;
-      border: none; border-radius: 10px;
-      padding: 14px; font-size: 16px;
-      font-weight: 700; font-family: 'Noto Sans TC', sans-serif;
-      letter-spacing: 2px;
-      transition: background 0.2s ease, transform 0.1s ease;
-      width: 100%; margin-top: 12px;
+      background: var(--accent-orange); color: #FFFFFF;
+      border: 2px solid var(--accent-orange);
+      border-radius: 12px; padding: 16px;
+      font-size: 16px; font-weight: 700;
+      font-family: 'Libre Baskerville', serif; letter-spacing: 2px;
+      transition: all 0.15s ease; width: 100%;
+      cursor: pointer;
+      transform: rotate(-1deg);
+    }
+    .login-btn:hover {
+      background: var(--accent-orange-dark);
+      transform: rotate(0deg) scale(1.05);
+      box-shadow: 4px 4px 12px rgba(0,0,0,0.15);
     }
     .login-btn:active {
-      transform: scale(0.98);
-      background: var(--navy-light);
+      transform: rotate(-1deg) scale(0.98);
     }
 
     /* ── Tab 切換動畫 ── */
-    .my-tab { animation: tabIn 0.25s ease; }
+    .my-tab { animation: tabIn 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
     @keyframes tabIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── 動作卡片 ── */
+    /* ── 動作卡片：手繪氣泡風格 ── */
     .workout-card {
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: 2px solid var(--border-pencil);
+      background: var(--bg-panel);
       padding: 16px;
-      margin-bottom: 10px;
-      background: var(--surface);
-      transition: box-shadow 0.2s ease;
-    }
-    .workout-card:active { box-shadow: 0 2px 12px rgba(27,42,74,0.1); }
-    .workout-card-header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 12px;
-    }
-    .workout-move-name {
-      font-weight: 700; font-size: 16px; color: var(--navy);
-    }
-    .workout-set-badge {
-      background: var(--bg); color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 6px; padding: 2px 10px;
-      font-size: 11px; font-weight: 600;
-    }
-    .workout-plan {
-      font-size: 12px; color: var(--muted);
       margin-bottom: 12px;
+      position: relative;
+      border-radius: 16px;
+      transform: rotate(var(--card-tilt, 0deg));
+      transition: transform 0.3s ease;
     }
-    .workout-plan strong { color: var(--navy); }
-    .workout-inputs {
-      display: flex; gap: 8px; align-items: flex-end;
+    .workout-card:hover {
+      --card-tilt: -1.5deg;
+      transform: rotate(var(--card-tilt));
     }
+    /* 一般卡片：左側橙色邊條 */
+    .workout-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--accent-orange);
+      border-radius: 2px;
+    }
+    /* 追加組卡片：琥珀色樣式 */
+    .workout-card.extra-set {
+      border-color: var(--extra-border) !important;
+      background: var(--extra-bg) !important;
+    }
+    .workout-card.extra-set::before {
+      content: '' !important;
+      position: absolute !important;
+      left: 0 !important; top: 0 !important; bottom: 0 !important;
+      width: 4px !important;
+      background: var(--extra-border) !important;
+      border-radius: 2px !important;
+    }
+    .workout-card.extra-set .workout-move-name { color: var(--extra-border) !important; }
+    .workout-card.extra-set .workout-input-group input { border-color: var(--extra-border) !important; }
+    .workout-card.extra-set .workout-input-group input:focus { border-color: var(--extra-border) !important; box-shadow: 0 0 8px rgba(230, 126, 34, 0.3) !important; }
+    .workout-card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 2px dashed var(--border-pencil);
+    }
+    .workout-move-name { font-weight: 700; font-size: 16px; color: var(--text-charcoal); }
+    .workout-set-badge {
+      background: var(--border-pencil); color: var(--text-charcoal);
+      padding: 4px 12px; font-size: 10px; font-weight: 700;
+      letter-spacing: 1px; border-radius: 20px;
+    }
+    .workout-plan { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+    .workout-plan strong { color: var(--text-charcoal); font-size: 13px; font-weight: 700; }
+    .workout-plan .extra-indicator { color: var(--extra-border); font-weight: 700; }
+    .workout-inputs { display: flex; gap: 10px; align-items: flex-end; }
+    .workout-input-group { flex: 1; }
     .workout-input-group label {
-      display: block; font-size: 10px;
-      color: var(--muted); margin-bottom: 3px;
-      font-weight: 500; text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: block; font-size: 10px; color: var(--text-muted);
+      margin-bottom: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     }
     .workout-input-group input {
-      border: 2px solid var(--border);
-      border-radius: 8px; padding: 10px 8px;
-      text-align: center; font-size: 18px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-weight: 600; color: var(--navy);
-      background: var(--bg);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      width: 100%;
+      border: 1.5px dashed var(--border-pencil);
+      border-radius: 10px; padding: 12px 8px;
+      text-align: center; font-size: 20px;
+      font-family: 'Share Tech Mono', monospace; font-weight: 700; color: var(--text-charcoal);
+      background: var(--bg-cream); width: 100%;
+      transition: all 0.2s ease;
     }
     .workout-input-group input:focus {
       outline: none;
-      border-color: var(--navy);
-      box-shadow: 0 0 0 3px rgba(27,42,74,0.08);
+      border-color: var(--accent-orange);
+      box-shadow: 0 0 8px rgba(217, 87, 40, 0.2);
+      background: #FFFFFF;
     }
     .workout-btn {
-      border: none; border-radius: 8px;
-      padding: 12px 0; font-size: 15px;
-      font-weight: 700; font-family: 'Noto Sans TC', sans-serif;
-      transition: transform 0.1s ease, background 0.2s ease;
-      flex: 1; letter-spacing: 1px;
+      border: 2px solid var(--accent-orange); border-radius: 12px;
+      padding: 14px 0; font-size: 14px; font-weight: 700;
+      font-family: 'Libre Baskerville', serif;
+      transition: all 0.15s ease; flex: 2;
+      cursor: pointer;
+      background: var(--accent-orange); color: #FFFFFF;
     }
-    .workout-btn:active { transform: scale(0.96); }
+    .workout-btn:hover {
+      background: var(--accent-orange-dark);
+      transform: scale(1.02);
+    }
     .workout-btn.btn-log {
-      background: var(--navy); color: #fff;
+      background: var(--bg-panel); color: var(--accent-orange);
+      border: 2px solid var(--accent-orange);
     }
-    .workout-btn.btn-log:active { background: var(--navy-light); }
+    .workout-btn.btn-log:hover {
+      background: rgba(217, 87, 40, 0.1);
+    }
     .workout-btn.btn-done {
-      background: var(--teal); color: #fff;
+      background: var(--squats); color: #fff;
+      border-color: var(--squats);
     }
+    .workout-btn.btn-done:hover {
+      background: #5a7a38;
+    }
+    .workout-btn.btn-syncing {
+      background: var(--text-muted); animation: btnPulse 0.8s ease-in-out infinite;
+    }
+    @keyframes btnPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
 
-    /* ── 暖身組 ── */
+    /* ── 暖身組：手繪方塊 ── */
     .warmup-block {
-      background: linear-gradient(135deg, #F0F7F4 0%, #E8F5F0 100%);
-      border: 1px dashed var(--teal-lt);
-      border-left: 3px solid var(--teal);
-      padding: 10px 14px; border-radius: 8px;
-      margin-bottom: 10px; font-size: 12px;
+      background: rgba(107, 140, 66, 0.1);
+      border-left: 4px solid var(--squats);
+      padding: 10px 14px; margin-bottom: 10px;
+      font-size: 11px; position: relative;
+      border-radius: 0 12px 12px 0;
     }
-    .warmup-label {
-      color: var(--teal); font-weight: 700;
-      font-size: 11px; letter-spacing: 0.5px;
+    .warmup-block::before {
+      content: '🔥'; position: absolute; left: -8px; top: 0;
+      font-size: 10px;
     }
-    .warmup-detail {
-      color: var(--navy); margin-top: 3px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-weight: 500;
-    }
+    .warmup-label { color: var(--squats); font-weight: 700; font-size: 10px; letter-spacing: 1px; }
+    .warmup-detail { color: var(--text-charcoal); margin-top: 2px; font-weight: 600; font-family: 'Share Tech Mono', monospace; }
 
-    /* ── 1RM 顯示 ── */
+    /* ── 1RM 顯示：手繪標記 ── */
     .est-1rm-display {
-      background: linear-gradient(135deg, #FFF8E1 0%, #FFF3C7 100%);
-      border-radius: 8px; padding: 8px 14px;
-      margin-top: 10px; font-size: 12px;
-      color: #7B6000; border: 1px solid #FFE082;
+      background: rgba(217, 87, 40, 0.1); border: 1.5px solid rgba(217, 87, 40, 0.3);
+      border-radius: 10px; padding: 10px 14px; margin-top: 10px;
+      color: var(--accent-orange); font-size: 12px;
     }
-    .est-1rm-display .mono { font-weight: 600; }
+    .est-1rm-display .mono { font-weight: 700; }
 
     /* ── 追加組（Set 3+） ── */
-    .workout-card.is-extra {
-      background: linear-gradient(135deg, #FFFDF5 0%, #FFF9EB 100%);
-      border: 1px solid #FFE082;
-      border-left: 4px solid #F9A825;
-    }
-    .workout-card.is-extra .workout-input-group input {
-      border-style: dashed;
-      background: #FFFDE7;
-    }
     .extra-badge {
-      display: inline-block; background: #F9A825; color: #fff;
-      font-size: 10px; font-weight: 700; padding: 2px 8px;
-      border-radius: 10px; margin-left: 6px; letter-spacing: 0.5px;
+      display: inline-block; background: var(--extra-border); color: #FFFFFF;
+      font-size: 9px; font-weight: 700; padding: 2px 8px;
+      border-radius: 4px; margin-left: 6px; letter-spacing: 1px;
+      border: 1px solid var(--extra-border);
     }
     .extra-label {
-      display: inline-block; background: #FFF3C7; color: #F57F17;
-      font-size: 11px; font-weight: 700; padding: 2px 8px;
-      border-radius: 6px; margin-left: 6px; border: 1px solid #FFE082;
-    }
-
-    /* ── 追加組輸入-dialog ── */
-    .extra-set-form label {
-      font-size: 12px; font-weight: 600; color: var(--muted);
-      margin-bottom: 4px; display: block;
-    }
-    .extra-set-form .form-row {
-      display: flex; gap: 12px; margin-bottom: 16px;
-    }
-    .extra-set-form .form-field {
-      flex: 1;
-    }
-    .extra-set-form input[type="number"] {
-      width: 100%; text-align: center; font-size: 20px; font-weight: 700;
-      padding: 8px; border: 2px solid var(--border); border-radius: 8px;
-      background: #fff; color: var(--dark);
-    }
-    .extra-set-form input[type="number"]:focus {
-      outline: none; border-color: var(--primary);
-    }
-    .extra-set-form .unit {
-      font-size: 11px; color: var(--muted); text-align: center; margin-top: 2px;
+      display: inline-block; background: rgba(230, 126, 34, 0.15); color: var(--extra-border);
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 4px; margin-left: 6px; border: 1px solid var(--extra-border);
     }
 
     /* ── 加一組按鈕 ── */
     .add-extra-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      margin-top: 10px; padding: 6px 14px;
-      background: var(--bg); border: 1px dashed var(--border);
-      border-radius: 8px; font-size: 12px; font-weight: 600;
-      color: var(--muted); cursor: pointer;
-      transition: background 0.2s ease, border-color 0.2s ease;
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px; padding: 8px 16px;
+      background: transparent; border: 2px dashed var(--accent-orange);
+      border-radius: 12px; font-size: 12px; font-weight: 700;
+      color: var(--accent-orange); cursor: pointer;
+      transition: all 0.2s ease; width: 100%;
     }
-    .add-extra-btn:hover { background: #FFF8E1; border-color: #F9A825; color: #F57F17; }
-    .add-extra-btn:active { transform: scale(0.97); }
+    .add-extra-btn:hover { background: rgba(217, 87, 40, 0.1); border-style: solid; }
+    .add-extra-btn:active { transform: scale(0.98); background: var(--accent-orange); color: #FFFFFF; }
     .add-extra-btn .icon { font-size: 14px; }
 
-    /* ── 樂觀更新：同步中動畫 ── */
-    .workout-btn.btn-syncing {
-      animation: syncPulse 1.2s ease-in-out infinite;
-    }
-    @keyframes syncPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-
-    /* ── 統計卡片 ── */
+    /* ── 統計卡片：手繪風格式 ── */
     .stat-card {
-      background: var(--surface);
-      border-radius: 12px; padding: 14px 8px;
-      text-align: center;
-      box-shadow: 0 1px 4px rgba(27,42,74,0.05);
-      border-top: 3px solid var(--navy);
-      transition: transform 0.15s ease;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-pencil);
+      border-radius: 12px; padding: 12px 8px;
+      text-align: center; position: relative;
+      transition: all 0.2s ease;
+      transform: rotate(var(--stat-tilt, 0deg));
     }
-    .stat-card:active { transform: scale(0.97); }
+    .stat-card:hover {
+      --stat-tilt: -1deg;
+      transform: rotate(var(--stat-tilt));
+      box-shadow: 4px 4px 12px rgba(0,0,0,0.08);
+    }
     .stat-card:nth-child(1) { border-top-color: var(--squats); }
     .stat-card:nth-child(2) { border-top-color: var(--press); }
     .stat-card:nth-child(3) { border-top-color: var(--deadlift); }
-    .stat-card:nth-child(4) { border-top-color: var(--accent); }
+    .stat-card:nth-child(4) { border-top-color: var(--bench); }
+    .stat-card::after {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 2px; background: var(--border-pencil);
+    }
+    .stat-card:nth-child(1)::after { background: var(--squats); }
+    .stat-card:nth-child(2)::after { background: var(--press); }
+    .stat-card:nth-child(3)::after { background: var(--deadlift); }
+    .stat-card:nth-child(4)::after { background: var(--bench); }
     .stat-card .stat-value {
-      font-size: 22px; font-weight: 700;
-      color: var(--navy); margin-bottom: 2px;
+      font-size: 24px; font-weight: 700;
+      color: var(--text-charcoal); margin-bottom: 2px;
+      font-family: 'Share Tech Mono', monospace;
     }
     .stat-card .stat-label {
-      font-size: 10px; color: var(--muted);
-      font-weight: 500; letter-spacing: 0.3px;
+      font-size: 10px; color: var(--text-muted);
+      font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
     }
 
     /* ── 圖表容器 ── */
     .chart-container {
-      background: var(--surface);
-      border-radius: 12px; padding: 14px;
-      box-shadow: 0 1px 4px rgba(27,42,74,0.05);
-      margin-bottom: 12px;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-pencil);
+      border-radius: 12px; padding: 16px; margin-bottom: 12px;
     }
 
     /* ── PR Badge ── */
     .pr-badge {
-      display: inline-block;
-      background: var(--accent); color: #fff;
-      border-radius: 20px; padding: 2px 10px;
-      font-size: 10px; font-weight: 700;
-      margin-left: 6px; letter-spacing: 0.3px;
+      display: inline-block; background: var(--accent-orange); color: #FFFFFF;
+      border-radius: 4px; padding: 2px 10px;
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      margin-left: 6px;
     }
 
     /* ── PR 歷史 ── */
     .pr-history-item {
-      background: var(--surface);
-      border-left: 3px solid #F9A825;
-      padding: 10px 14px; border-radius: 0 8px 8px 0;
-      margin-bottom: 8px; font-size: 13px;
-      box-shadow: 0 1px 3px rgba(27,42,74,0.04);
+      background: var(--bg-panel);
+      border-left: 3px solid var(--accent-orange);
+      padding: 12px 14px; margin-bottom: 8px; font-size: 13px;
+      position: relative; border-radius: 0 12px 12px 0;
     }
-    .pr-history-item strong { color: var(--navy); }
+    .pr-history-item::before {
+      content: ''; position: absolute; left: -6px; top: 12px;
+      width: 6px; height: 6px; background: var(--accent-orange);
+      border-radius: 50%;
+    }
+    .pr-history-item strong { color: var(--text-charcoal); }
 
     /* ── 體重區塊 ── */
     .bodyweight-section {
-      background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
-      border-radius: 10px; padding: 14px;
-      margin-bottom: 12px;
+      background: rgba(107, 140, 66, 0.1);
+      border-left: 4px solid var(--squats);
+      border-radius: 12px; padding: 14px; margin-bottom: 12px;
     }
 
     /* ── 慶祝動畫 ── */
     .celebration {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      background: radial-gradient(ellipse at center, rgba(27,42,74,0.85) 0%, rgba(11,18,32,0.95) 100%);
+      background: rgba(253, 251, 247, 0.96);
       z-index: 10000; display: flex;
       align-items: center; justify-content: center;
-      animation: celebFadeIn 0.3s ease;
-    }
-    @keyframes celebFadeIn {
-      from { opacity: 0; } to { opacity: 1; }
+      border: 4px solid var(--accent-orange);
     }
     .celebration-content {
-      background: var(--surface);
-      border-radius: 20px; padding: 36px 28px;
+      background: var(--bg-panel);
+      border: 3px solid var(--accent-orange);
+      border-radius: 20px; padding: 40px 28px;
       text-align: center; max-width: 300px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      animation: celebPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 12px 12px 40px rgba(217, 87, 40, 0.2);
+      animation: celebrationBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    @keyframes celebPop {
-      from { transform: scale(0.5) translateY(20px); opacity: 0; }
-      to { transform: scale(1) translateY(0); opacity: 1; }
+    @keyframes celebrationBounce {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .celebration-content h4 {
+      color: var(--accent-orange); font-weight: 700; font-family: 'Libre Baskerville', serif;
+      font-size: 28px;
     }
 
     /* ── 表單通用 ── */
-    input[type="date"],
-    input[type="number"],
-    input[type="password"],
-    input[type="text"] {
-      border: 2px solid var(--border);
-      border-radius: 8px; padding: 10px 12px;
-      font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
-      background: var(--surface);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      color: var(--navy);
+    input[type="date"], input[type="number"], input[type="password"], input[type="text"] {
+      border: 1.5px dashed var(--border-pencil);
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 14px; font-family: 'Libre Baskerville', serif;
+      background: var(--bg-cream); color: var(--text-charcoal);
+      transition: all 0.2s ease;
     }
-    input:focus {
-      outline: none;
-      border-color: var(--navy);
-      box-shadow: 0 0 0 3px rgba(27,42,74,0.08);
-    }
+    input:focus { outline: none; border-color: var(--accent-orange); box-shadow: 0 0 10px rgba(217, 87, 40, 0.25); background: #FFFFFF; }
+    input::placeholder { color: var(--text-muted); }
 
     /* ── 按鈕通用 ── */
-    .btn {
-      border-radius: 8px; font-weight: 600;
-      font-family: 'Noto Sans TC', sans-serif;
-      transition: transform 0.1s ease, box-shadow 0.15s ease;
-    }
-    .btn:active { transform: scale(0.97); }
-
-    .btn-navy {
-      background: var(--navy); color: #fff; border: none;
-    }
-    .btn-navy:hover, .btn-navy:focus {
-      background: var(--navy-light); color: #fff;
-    }
-
-    .btn-accent {
-      background: var(--accent); color: #fff; border: none;
-    }
-    .btn-accent:hover, .btn-accent:focus {
-      background: var(--accent-lt); color: #fff;
-    }
-
-    .btn-teal {
-      background: var(--teal); color: #fff; border: none;
-    }
-    .btn-teal:hover, .btn-teal:focus {
-      background: var(--teal-lt); color: #fff;
-    }
+    .btn { border-radius: 12px; font-weight: 700; font-family: 'Libre Baskerville', serif; transition: all 0.15s ease; }
+    .btn:hover { transform: scale(1.03); }
+    .btn:active { transform: scale(0.98); box-shadow: none; }
+    .btn-navy { background: var(--accent-orange); color: #FFFFFF; border: 2px solid var(--accent-orange); }
+    .btn-navy:hover { background: var(--accent-orange-dark); }
+    .btn-teal { background: var(--squats) !important; color: #fff !important; border: 2px solid var(--squats); }
+    .btn-teal:hover { background: #5a7a38 !important; }
+    .btn-accent { background: var(--accent-orange) !important; color: #FFFFFF !important; border: 2px solid var(--accent-orange); }
+    .btn-accent:hover { background: var(--accent-orange-dark) !important; }
+    .btn-light { background: var(--bg-panel); color: var(--text-charcoal); border: 2px solid var(--border-pencil); }
+    .btn-light:hover { border-color: var(--text-muted); }
 
     /* ── 設定頁 ── */
-    .setting-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 14px;
-      margin-bottom: 8px;
-    }
-    .setting-item-header {
-      font-weight: 700; font-size: 14px;
-      color: var(--navy); margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid var(--bg);
-    }
-    .setting-item-header.squat-color  { border-bottom-color: var(--squats); }
-    .setting-item-header.press-color  { border-bottom-color: var(--press); }
+    .setting-item { background: var(--bg-panel); border: 2px solid var(--border-pencil); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+    .setting-item-header { font-weight: 700; font-size: 14px; color: var(--text-charcoal); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px dashed var(--border-pencil); letter-spacing: 1px; text-transform: uppercase; font-family: 'Libre Baskerville', serif; }
+    .setting-item-header.squat-color { border-bottom-color: var(--squats); }
+    .setting-item-header.press-color { border-bottom-color: var(--press); }
     .setting-item-header.deadlift-color { border-bottom-color: var(--deadlift); }
-    .setting-item-header.bench-color  { border-bottom-color: var(--bench); }
+    .setting-item-header.bench-color { border-bottom-color: var(--bench); }
+    .setting-item-header::after { content: attr(data-move); display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; letter-spacing: 2px; }
 
     /* ── 密碼修改區塊 ── */
-    .pwd-section {
-      background: var(--surface);
-      border: 1px solid #FFCDD2;
-      border-left: 3px solid var(--accent);
-      border-radius: 10px; padding: 16px;
-      margin-top: 16px;
-    }
-    .pwd-section h6 { color: var(--accent); font-weight: 700; }
+    .pwd-section { background: var(--bg-panel); border-left: 4px solid var(--accent-orange); border-radius: 12px; padding: 18px; margin-top: 16px; }
+    .pwd-section h6 { color: var(--accent-orange); font-weight: 700; font-family: 'Libre Baskerville', serif; letter-spacing: 1px; }
 
     /* ── 生成頁 ── */
-    .gen-option {
-      background: var(--bg);
-      padding: 12px 14px; border-radius: 10px;
-      margin-bottom: 10px;
-    }
-    .gen-option label {
-      font-weight: 700; font-size: 13px;
-      color: var(--navy); display: block;
-      margin-bottom: 6px;
-    }
+    .gen-option { background: var(--bg-panel); padding: 14px; border: 2px solid var(--border-pencil); border-radius: 12px; margin-bottom: 10px; }
+    .gen-option label { font-weight: 700; font-size: 13px; color: var(--text-charcoal); display: block; margin-bottom: 8px; letter-spacing: 1px; }
+    .gen-option .form-check-label { color: var(--text-charcoal); }
 
     /* ── 移動課表 ── */
-    .move-date-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px;
-      margin-top: 12px;
-    }
+    .move-date-box { background: var(--bg-panel); border: 2px solid var(--border-pencil); border-radius: 12px; padding: 16px; margin-top: 16px; }
+    .move-date-box strong { color: var(--text-charcoal); font-weight: 700; letter-spacing: 1px; }
 
-    /* ── 自訂 Modal ── */
-    .modal-content {
-      border-radius: 16px; border: none;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    }
-    .modal-body {
-      padding: 24px; font-size: 14px;
-      color: var(--navy);
-    }
-    .modal-footer { border-top: 1px solid var(--border); }
+    /* ── 自訂 Modal：手繪風格 ── */
+    .modal-content { border-radius: 16px; border: 3px solid var(--accent-orange); background: var(--bg-panel); box-shadow: 12px 12px 40px rgba(217, 87, 40, 0.2); }
+    .modal-header { border-bottom: 2px dashed var(--border-pencil); background: rgba(217, 87, 40, 0.1); padding: 16px 20px; }
+    .modal-header .btn-close { filter: invert(0.2); opacity: 0.7; }
+    .modal-body { padding: 24px; font-size: 14px; color: var(--text-charcoal); }
+    .modal-footer { border-top: 2px dashed var(--border-pencil); padding: 16px 20px; }
 
     /* ── 標題樣式 ── */
     .section-title {
-      font-weight: 700; font-size: 15px;
-      color: var(--navy); margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--border);
+      font-weight: 700; font-size: 15px; color: var(--text-charcoal); margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 2px dashed var(--border-pencil); letter-spacing: 2px; text-transform: uppercase;
+      font-family: 'Libre Baskerville', serif;
     }
+    .section-title::before { content: '✏️ '; color: var(--accent-orange); }
 
     /* ── 日期選擇器 ── */
-    #targetDate {
-      border: 2px solid var(--border);
-      border-radius: 10px; padding: 12px 14px;
-      font-size: 15px; font-weight: 500;
-      background: var(--surface);
-      margin-bottom: 14px;
-    }
+    #targetDate { border: 1.5px dashed var(--border-pencil); border-radius: 10px; padding: 12px 14px; font-size: 15px; font-family: 'Share Tech Mono', monospace; font-weight: 600; background: var(--bg-cream); margin-bottom: 14px; color: var(--text-charcoal); }
+    #targetDate:focus { background: #FFFFFF; }
 
     /* ── 月曆控制按鈕 ── */
-    .cal-nav-btn {
-      background: var(--navy); color: #fff;
-      border: none; border-radius: 8px;
-      width: 32px; height: 32px;
-      display: flex; align-items: center;
-      justify-content: center; font-size: 16px;
-      font-weight: 700;
-      transition: background 0.2s ease;
-    }
-    .cal-nav-btn:hover { background: var(--navy-light); }
+    .cal-nav-btn { background: var(--bg-panel); color: var(--accent-orange); border: 2px solid var(--accent-orange); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; transition: all 0.2s ease; }
+    .cal-nav-btn:hover { background: var(--accent-orange); color: #FFFFFF; }
+    .cal-nav-btn:active { transform: scale(0.95); }
 
     /* ── 產生課表按鈕 ── */
-    .gen-btn {
-      background: var(--navy); color: #fff;
-      border: none; border-radius: 12px;
-      padding: 16px; font-size: 16px;
-      font-weight: 700; font-family: 'Noto Sans TC', sans-serif;
-      letter-spacing: 1px;
-      transition: background 0.2s ease, transform 0.1s ease;
-      width: 100%; margin-top: 8px;
-    }
-    .gen-btn:active {
-      transform: scale(0.98);
-      background: var(--navy-light);
-    }
+    .gen-btn { background: var(--accent-orange); color: #FFFFFF; border: 2px solid var(--accent-orange); border-radius: 12px; padding: 18px; font-size: 16px; font-weight: 700; font-family: 'Libre Baskerville', serif; letter-spacing: 2px; transition: all 0.2s ease; width: 100%; margin-top: 8px; }
+    .gen-btn:hover { background: var(--accent-orange-dark); }
+    .gen-btn:active { transform: scale(0.98); }
 
     /* ── 儲存設定按鈕 ── */
-    .save-btn {
-      background: var(--teal); color: #fff;
-      border: none; border-radius: 10px;
-      padding: 14px; font-size: 15px;
-      font-weight: 700; font-family: 'Noto Sans TC', sans-serif;
-      letter-spacing: 1px;
-      transition: background 0.2s ease, transform 0.1s ease;
-      width: 100%; margin-top: 12px;
-    }
-    .save-btn:active {
-      transform: scale(0.98);
-      background: var(--teal-lt);
-    }
+    .save-btn { background: var(--squats); color: #fff; border: 2px solid var(--squats); border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 700; font-family: 'Libre Baskerville', serif; letter-spacing: 2px; transition: all 0.2s ease; width: 100%; margin-top: 12px; }
+    .save-btn:hover { background: #5a7a38; }
+    .save-btn:active { transform: scale(0.98); }
 
     /* ── 空狀態 ── */
-    .empty-state {
-      text-align: center; padding: 40px 20px;
-      color: var(--muted); font-size: 13px;
-    }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 13px; }
+    .empty-state::before { content: '⚠️ '; font-size: 32px; display: block; margin-bottom: 12px; color: var(--accent-orange); }
 
     /* ── 表單標籤 ── */
-    .form-label-sm {
-      font-size: 10px; color: var(--muted);
-      font-weight: 500; text-transform: uppercase;
-      letter-spacing: 0.5px; margin-bottom: 4px;
-    }
-
-    /* ── 自訂表單單選/核取 ── */
-    .form-check-input:checked {
-      background-color: var(--navy);
-      border-color: var(--navy);
-    }
-    .form-check-input:focus {
-      box-shadow: 0 0 0 3px rgba(27,42,74,0.15);
-      border-color: var(--navy);
-    }
+    .form-label-sm { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .form-check-input:checked { background-color: var(--accent-orange); border-color: var(--accent-orange); }
+    .form-check-input:focus { box-shadow: 0 0 0 3px rgba(217, 87, 40, 0.2); border-color: var(--accent-orange); }
 
     /* ── 文字工具 ── */
-    .text-navy { color: var(--navy) !important; }
-    .text-muted-custom { color: var(--muted) !important; }
-    .text-accent { color: var(--accent) !important; }
-    .text-teal { color: var(--teal) !important; }
-
-    /* ── 漸層背景 ── */
-    .bg-gradient-navy {
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    }
+    .text-navy { color: var(--text-charcoal) !important; }
+    .text-muted-custom { color: var(--text-muted) !important; }
+    .text-accent { color: var(--accent-orange) !important; }
+    .text-teal { color: var(--squats) !important; }
 
     /* ── 響應式 ── */
-    /* 手機版：輸入框垂直堆疊，按鈕全寬 */
     @media (max-width: 480px) {
-      .workout-inputs {
-        flex-direction: column; gap: 6px;
-      }
+      body { padding-bottom: 110px; }
+      .workout-inputs { flex-direction: column; gap: 6px; }
       .workout-input-group { flex: none !important; width: 100%; }
-      .workout-input-group input { padding: 14px 8px; font-size: 20px; }
-      .workout-btn {
-        width: 100%;
-        padding: 18px 0;
-        font-size: 19px;
-        border-radius: 12px;
-      }
+      .workout-input-group input { padding: 14px 8px; font-size: 22px; }
+      .workout-btn { width: 100%; padding: 16px 0; font-size: 16px; border-radius: 12px; }
+      .login-brand { font-size: 56px; }
+      .stat-card .stat-value { font-size: 20px; }
+      .bottom-nav { padding: 8px 0; }
+      .nav-item .nav-icon { font-size: 20px; }
+    }
+    @media (max-width: 360px) {
+      .login-brand { font-size: 48px; }
+      .nav-item .nav-icon { font-size: 18px; }
+      .login-box { padding: 36px 24px; }
+      .login-subtitle { font-size: 12px; }
     }
 
-    @media (max-width: 360px) {
-      .login-brand { font-size: 44px; }
-      .stat-card .stat-value { font-size: 18px; }
-    }
+    /* ── 特殊動畫 ── */
+    @keyframes celebrationBounce { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes btnPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
   </style>
 </head>
 <body>
 
-<!-- ═══════ 登入畫面 ═══════ -->
+<!-- ═══════ 登入畫面 ── 手繪風格 ═══════ -->
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-brand">5<span>3</span>1</div>
@@ -729,7 +688,7 @@
   </div>
 </div>
 
-<!-- ═══════ Loader ═══════ -->
+<!-- ═══════ Loader ── 手繪風格 ═══════ -->
 <div id="loader">
   <div class="loader-spinner"></div>
   <span id="loaderText">處理中...</span>
@@ -743,7 +702,7 @@
     <div id="tab-log" class="my-tab active">
       <div class="card">
         <div style="padding: 18px 18px 0 18px;">
-          <input type="date" class="w-100" id="targetDate" onchange="loadWorkouts()">
+          <input type="date" class="w-100 mono" id="targetDate" onchange="loadWorkouts()">
         </div>
         <div id="workoutList" style="padding: 14px 18px 18px 18px;"></div>
       </div>
@@ -754,7 +713,7 @@
       <div class="card">
         <div style="padding: 14px 16px;">
           <div class="d-flex justify-content-between align-items-center">
-            <h6 id="calMonthDisplay" class="mb-0 fw-bold text-navy"></h6>
+            <h6 id="calMonthDisplay" class="mb-0 fw-bold" style="color: var(--accent-orange); letter-spacing: 2px; font-family: 'Patrick Hand', cursive;"></h6>
             <div class="d-flex gap-2">
               <button class="cal-nav-btn" onclick="changeMonth(-1)">&lt;</button>
               <button class="cal-nav-btn" onclick="changeMonth(1)">&gt;</button>
@@ -769,11 +728,11 @@
     <div id="tab-gen" class="my-tab" style="display:none;">
       <div class="card">
         <div style="padding: 20px 18px;">
-          <h6 class="section-title">生成新週期 (4週)</h6>
+          <h6 class="section-title" style="color: var(--accent-orange);">生成新週期 (4週)</h6>
 
           <div class="gen-option">
             <label>起始日 (Week 1)</label>
-            <input type="date" class="w-100" id="startDate">
+            <input type="date" class="w-100 mono" id="startDate">
           </div>
 
           <div class="gen-option">
@@ -805,7 +764,7 @@
           </div>
 
           <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="incCheck">
+            <input class="form-check-input" type="checkbox" id="incCheck" checked>
             <label class="form-check-label fw-bold text-accent" for="incCheck">
               下一週期自動累加重量 (上肢 2.5kg / 下肢 5kg)
             </label>
@@ -820,7 +779,7 @@
     <div id="tab-set" class="my-tab" style="display:none;">
       <div class="card">
         <div style="padding: 18px;">
-          <h6 class="section-title">1RM 設定</h6>
+          <h6 class="section-title" style="color: var(--accent-orange);">1RM 設定</h6>
           <div id="settingsContainer"></div>
           <button class="save-btn" onclick="saveSet()">儲存設定</button>
         </div>
@@ -864,16 +823,16 @@
       <!-- 體重紀錄 -->
       <div class="card">
         <div style="padding: 16px;">
-          <h6 class="section-title text-teal">體重紀錄</h6>
+          <h6 class="section-title" style="color: var(--squats);">體重紀錄</h6>
           <div class="bodyweight-section">
             <div class="row g-2 align-items-end">
               <div class="col-6">
                 <label class="form-label-sm">日期</label>
-                <input type="date" class="w-100" id="bodyweightDate">
+                <input type="date" class="w-100 mono" id="bodyweightDate">
               </div>
               <div class="col-3">
                 <label class="form-label-sm">體重 (kg)</label>
-                <input type="number" step="0.1" class="w-100" id="bodyweightValue" placeholder="0.0">
+                <input type="number" step="0.1" class="w-100 mono" id="bodyweightValue" placeholder="0.0">
               </div>
               <div class="col-3">
                 <button class="btn btn-teal w-100 py-1" onclick="saveBodyWeight()">儲存</button>
@@ -887,7 +846,7 @@
       <!-- PR 歷史 -->
       <div class="card">
         <div style="padding: 16px;">
-          <h6 class="section-title" style="color: #F9A825;">PR 歷史紀錄</h6>
+          <h6 class="section-title" style="color: var(--accent-orange);">PR 歷史紀錄</h6>
           <div id="prHistoryList"><p class="text-muted-custom small text-center py-2">尚無 PR 紀錄</p></div>
         </div>
       </div>
@@ -930,8 +889,8 @@
   let currentCalDate = new Date();
   let allEvents = {};
   const movements = [
-    {id: 'Squat', name: '深蹲 Squat'}, {id: 'OverheadPress', name: '肩推 Press'},
-    {id: 'Deadlift', name: '硬舉 Deadlift'}, {id: 'BenchPress', name: '臥推 Bench'}
+    {id: 'Squat', name: 'Squat'}, {id: 'OverheadPress', name: 'Press'},
+    {id: 'Deadlift', name: 'Deadlift'}, {id: 'BenchPress', name: 'Bench'}
   ];
 
   let sessionPwd = '';
@@ -951,9 +910,9 @@
 
     _classify: function(result) {
       var code = result.error_code;
-      var msg = result.error || '未知錯誤';
-      if (code === 'AUTH_ERROR' || (!code && msg.toLowerCase().includes('密碼'))) throw new AuthError(msg);
-      if (code === 'VALIDATION_ERROR' || (!code && msg.toLowerCase().includes('未知'))) throw new ValidationError(msg);
+      var msg = result.error || 'Unknown Error';
+      if (code === 'AUTH_ERROR' || (!code && (msg.toLowerCase().includes('password') || msg.includes('密碼')))) throw new AuthError(msg);
+      if (code === 'VALIDATION_ERROR' || (!code && (msg.toLowerCase().includes('unknown') || msg.includes('未知')))) throw new ValidationError(msg);
       throw new Error(msg);
     },
 
@@ -971,9 +930,8 @@
         });
         clearTimeout(timer);
 
-        // Handle HTTP errors
         if (!res.ok) {
-          if (res.status >= 500) throw new NetworkError('Server error: ' + res.status);
+          if (res.status >= 500) throw new NetworkError('Server Error: ' + res.status);
           throw new NetworkError('HTTP ' + res.status);
         }
 
@@ -982,11 +940,10 @@
         return result.data;
       } catch (err) {
         clearTimeout(timer);
-        // Retry on network errors and timeout
         if (err instanceof NetworkError || err.name === 'AbortError') {
-          throw err; // will be retried by caller
+          throw err;
         }
-        throw err; // auth/validation errors — don't retry
+        throw err;
       }
     },
 
@@ -998,7 +955,7 @@
         } catch (err) {
           lastErr = err;
           if (err.name === 'AuthError' || err.name === 'ValidationError') throw err;
-          if (attempt < this._maxRetries) continue; // retry
+          if (attempt < this._maxRetries) continue;
         }
       }
       throw lastErr;
@@ -1006,9 +963,6 @@
   };
 
   // ═══════ Tab 配置 — deep module ═══════
-  // Interface: TABS (read-only list of tab IDs)
-  // Implementation hides: tab DOM id suffixes, tab-specific lazy load hooks
-
   var TABS = ['log', 'cal', 'gen', 'set', 'stat'];
 
   var TAB_HOOKS = {
@@ -1027,7 +981,13 @@
   }
 
   // ═══════ UI 共用 ═══════
-  let appModal;
+  let appModal = null;
+  function getAppModal() {
+    if (!appModal) {
+      appModal = new bootstrap.Modal(document.getElementById('customModal'));
+    }
+    return appModal;
+  }
   window.addEventListener('DOMContentLoaded', () => {
     appModal = new bootstrap.Modal(document.getElementById('customModal'));
     renderSettingsUI();
@@ -1036,12 +996,14 @@
   });
 
   function showAlert(msg) {
+    if (!appModal) getAppModal();
     document.getElementById('customModalBody').innerHTML = msg;
     document.getElementById('customModalFooter').innerHTML = '<button type="button" class="btn btn-navy w-100" data-bs-dismiss="modal">確定</button>';
     appModal.show();
   }
 
   function showConfirm(msg, confirmCallback, btnText = '確定') {
+    if (!appModal) getAppModal();
     document.getElementById('customModalBody').innerHTML = msg;
     document.getElementById('customModalFooter').innerHTML = `
       <button type="button" class="btn btn-light border w-100 mb-2" data-bs-dismiss="modal">取消</button>
@@ -1060,7 +1022,7 @@
     movements.forEach(m => {
       html += `
       <div class="setting-item">
-        <div class="setting-item-header ${colorMap[m.id]}">${m.name}</div>
+        <div class="setting-item-header ${colorMap[m.id]}" data-move="${m.name.toUpperCase()}">${m.name}</div>
         <div class="row g-2">
           <div class="col-6">
             <label class="form-label-sm">基礎 1RM</label>
@@ -1111,7 +1073,7 @@
     }
   }
 
-  // ═══════ 動作紀錄渲染 ═══════
+  // ═══════ 動作紀錄渲染 ── 手繪風格 ═══════
   function renderWorkoutsData(data, date, events) {
     const list = document.getElementById('workoutList');
     if (data.length === 0) {
@@ -1119,7 +1081,7 @@
       hideLoader(); return;
     }
 
-    let html = `<h6 class="section-title" style="margin-bottom:14px;">🏋️ ${data[0].week}</h6>`;
+    let html = `<h6 class="section-title" style="margin-bottom:14px; color: var(--accent-orange);">${data[0].week}</h6>`;
 
     data.forEach((item, i) => {
       // 暖身組
@@ -1127,69 +1089,75 @@
         html += `<div class="warmup-block"><div class="warmup-label">🔥 暖身組</div><div class="warmup-detail">${item.warmupWeight}</div></div>`;
       }
 
-      // 判斷是否為追加組（Set 3 完成後可追加 3A/3B/3C...）
-      // Set 3 是原訂最後一組，Set 3A/3B/3C... 是追加組
-      var isSet3 = item.set === 'Set 3';
-      var isExtra = item.set.indexOf('Set 3') === 0 && item.set.length > 6; // 'Set 3A' 長度 7，'Set 3' 長度 6
+      // 判斷是否為追加組
+      var setStr = String(item.set || '').trim();  // 移除前後空白
+      var isSet3 = setStr === 'Set 3';
+      var isExtra = setStr.startsWith('Set 3') && setStr.length > 5;
+
+      // 調試信息
+      console.log('Workout Item:', item.movement, '| Set:', item.set, '| Trimmed:', setStr, '| isExtra:', isExtra, '| length:', setStr.length);
 
       html += `
-        <div class="workout-card${isExtra ? ' is-extra' : ''}">
+        <div class="workout-card${isExtra ? ' extra-set' : ''}" data-set="${setStr}" data-isextra="${isExtra}">
           <div class="workout-card-header">
             <span class="workout-move-name">${item.movement}${isExtra ? '<span class="extra-label">⚡ 追加組</span>' : ''}</span>
-            <span class="workout-set-badge">${item.set}${isExtra ? '<span class="extra-badge">追加</span>' : ''}</span>
+            <span class="workout-set-badge mono">${setStr}${isExtra ? '<span class="extra-badge">追加</span>' : ''}</span>
           </div>
           <div class="workout-plan">
-            ${item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span style="font-size:12px; color: #F9A825; font-weight: 700;">⚡ 追加組 — 無原訂重量/次數</span>'}
+            ${item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span style="font-size:12px; color: var(--extra-border); font-weight: 700;">⚡ 追加組 — 無原訂重量/次數</span>'}
           </div>
           <div class="workout-inputs">
             <div class="workout-input-group" style="flex:1.5;">
               <label>重量</label>
-              <input type="number" id="aw-${i}" class="mono" value="${item.actualWeight}">
+              <input type="number" id="aw-'+i+'" class="mono" value="${item.actualWeight}">
             </div>
             <div class="workout-input-group" style="flex:1;">
               <label>次數</label>
-              <input type="number" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}">
+              <input type="number" id="ar-'+i+'" class="mono" value="${item.actualReps.replace('+','')}">
             </div>
             <div class="workout-input-group" style="flex:4.5;">
               <label>&nbsp;</label>
-              <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-navy'}" onclick="doLog(${i},'${item.rowIdx}','${item.date}','${item.movement}','${item.set}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
+              <button id="btn-'+i+'" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-log'}" onclick="doLog('+i+','\''+item.rowIdx+'\''+'\''+item.date+'\''+'\''+item.movement+'\''+'\''+item.set+'\')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
           ${item.isLogged === 'V' ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${item.est1RM > 0 ? Math.round(item.est1RM) : '-'}</strong> kg</span></div>` : ''}
-          ${isSet3 && item.isLogged === 'V' ? '<button class="add-extra-btn" onclick="doAddExtraSet(\'' + item.date + '\',\'' + item.movement + '\',this,\'' + item.actualWeight + '\',\'' + item.actualReps + '\')"><span class="icon">+</span> 加一組</button>' : ''}
+                   ${isSet3 && item.isLogged === 'V' ? '<button class="add-extra-btn" data-date="' + item.date + '" data-movement="' + item.movement + '" onclick="doAddExtraSet(\'' + item.date + '\',\'' + item.movement + '\',this,\'' + item.actualWeight + '\',\'' + item.actualReps + '\')"><span class="icon">+</span> 加一組</button>' : ''}
         </div>`;
     });
 
-    // 統計每個動作的追加組數量，超過 5 組隱藏「加一組」按鈕
+    // 統計追加組數量
     var extraCount = {};
     data.forEach(function(item) {
-      if (item.set.indexOf('Set 3') === 0 && item.set.length > 6) {
+      var setStr = String(item.set || '').trim();
+      if (setStr.startsWith('Set 3') && setStr.length > 5) {
         var key = item.date + '|' + item.movement;
         extraCount[key] = (extraCount[key] || 0) + 1;
       }
     });
-    document.querySelectorAll('.add-extra-btn').forEach(function(btn) {
-      var key = btn.getAttribute('data-date') + '|' + btn.getAttribute('data-movement');
-      var remaining = 5 - (extraCount[key] || 0);
-      if (remaining <= 0) {
-        btn.style.display = 'none';
-      } else {
-        btn.innerHTML = '<span class="icon">+</span> 加一組 (剩 ' + remaining + ' 組)';
-      }
-    });
-
     // 移動課表
     html += `
       <div class="move-date-box">
-        <strong class="d-block mb-2" style="font-size:13px; color: var(--navy);">📅 將本日課表移動至其他日期</strong>
+        <strong class="d-block mb-2" style="font-size:13px; color: var(--text-charcoal);">📅 將本日課表移動至其他日期</strong>
         <div class="d-flex gap-2">
-          <input type="date" id="newMoveDate" class="flex-grow-1" value="${date}" style="margin:0;">
+          <input type="date" id="newMoveDate" class="flex-grow-1 mono" value="${date}" style="margin:0;">
           <button class="btn btn-navy py-2 px-3" onclick="moveSchedule('${date}')">移動</button>
         </div>
       </div>`;
 
     list.innerHTML = html;
     hideLoader();
+
+    // 設置追加組按鈕的 data-extra-count 屬性 (在 HTML 渲染後)
+    document.querySelectorAll('.add-extra-btn').forEach(function(btn) {
+      var key = btn.getAttribute('data-date') + '|' + btn.getAttribute('data-movement');
+      var remaining = 5 - (extraCount[key] || 0);
+      btn.setAttribute('data-extra-count', extraCount[key] || 0);
+      if (remaining <= 0) {
+        btn.style.display = 'none';
+      } else {
+        btn.innerHTML = '<span class="icon">+</span> 加一組 (剩 ' + remaining + ' 組)';
+      }
+    });
   }
 
   let loadWorkoutsTimer = null;
@@ -1214,14 +1182,14 @@
       allEvents = await API.post('getAllPrograms');
       renderCalendar();
       loadWorkouts();
-    } catch(err) { hideLoader(); showAlert('移動失敗：' + err.message); }
+    } catch(err) { hideLoader(); showAlert('移動失敗： ' + err.message); }
   }
 
   function moveSchedule(oldDate) {
     const newDate = document.getElementById('newMoveDate').value;
-    if (!newDate || oldDate === newDate) return showAlert('請選擇一個不同的日期！');
+    if (!newDate || oldDate === newDate) return showAlert('請選擇一個不同的日期');
     if (allEvents[newDate]) {
-      showConfirm(`⚠️ 目標日期已有課表，確定要合併嗎？`, () => executeMove(oldDate, newDate), '確定合併');
+      showConfirm(`⚠️ <strong class='text-accent'>發現衝突！</strong>\n\n目標日期已有課表，確定要合併嗎？`, () => executeMove(oldDate, newDate), '確定合併');
     } else {
       executeMove(oldDate, newDate);
     }
@@ -1243,7 +1211,7 @@
       await loadWorkouts();
       showTab('log', document.querySelector('.bottom-nav .nav-item'));
       hideLoader();
-    } catch(err) { hideLoader(); showAlert('產生失敗：' + err.message); }
+    } catch(err) { hideLoader(); showAlert('產生失敗: ' + err.message); }
   }
 
   async function generate() {
@@ -1276,7 +1244,7 @@
     const card = btn.closest('.workout-card');
     const aw = awEl.value, ar = arEl.value;
 
-    // ── 樂觀更新：立即顯示「已儲存」 ──
+    // 樂觀更新
     const prevClassName = btn.className;
     const prevText = btn.innerText;
     const prevDone = allEvents[d] ? { ...allEvents[d] } : null;
@@ -1291,12 +1259,11 @@
     }
     renderCalendar();
 
-    // ── 背景寫入 API ──
+    // 背景寫入 API
     let result;
     try {
       result = await API.post('logWorkout', { logData: { rowIdx: row, date: d, movement: m, set: set, actualWeight: aw, actualReps: ar } });
     } catch(err) {
-      // ── 寫入失敗：回滾 ──
       btn.className = prevClassName;
       btn.innerText = prevText;
       btn.disabled = false;
@@ -1308,7 +1275,6 @@
       return;
     }
 
-    // ── 寫入成功：移除動畫，顯示最終狀態 ──
     btn.className = 'workout-btn btn-done';
     btn.innerText = '✅ 已儲存';
     btn.disabled = false;
@@ -1331,38 +1297,19 @@
   function doAddExtraSet(date, movement, btnEl, defaultWeight, defaultReps) {
     var w = Number(defaultWeight) || 0;
     var r = Number(defaultReps) || 0;
-    var preview = (w > 0 && r > 0) ? '（' + w + 'kg × ' + r + ' 次）' : '';
 
-    var body = '<div style="text-align:center;padding:12px 0;">' +
-      '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:8px;">💪 新增追加組</div>' +
-      '<div style="font-size:13px;color:var(--muted);">是否新增追加組' + preview + '？</div>' +
-    '</div>';
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span class="icon">⏳</span> 儲存中...';
 
-    var footer = '<button type="button" class="btn btn-light border w-100 mb-2" data-bs-dismiss="modal">取消</button>' +
-      '<button type="button" class="btn btn-navy w-100 m-0" id="extraSetConfirmBtn">新增</button>';
-
-    document.getElementById('customModalBody').innerHTML = body;
-    document.getElementById('customModalFooter').innerHTML = footer;
-
-    document.getElementById('extraSetConfirmBtn').onclick = function() {
-      appModal.hide();
-
-      btnEl.disabled = true;
-      btnEl.innerHTML = '<span class="icon">⏳</span> 儲存中...';
-
-      API.post('addExtraSet', {
-        logData: { date: date, movement: movement, actualWeight: w, actualReps: r }
-      }).then(function(result) {
-        showAlert('✅ ' + result.message + '：' + w + 'kg × ' + r + ' 組');
-        loadWorkouts();
-      }).catch(function(err) {
-        showAlert('新增失敗：' + err.message);
-        btnEl.disabled = false;
-        btnEl.innerHTML = '<span class="icon">+</span> 加一組';
-      });
-    };
-
-    appModal.show();
+    API.post('addExtraSet', {
+      logData: { date: date, movement: movement, actualWeight: w, actualReps: r }
+    }).then(function(result) {
+      btnEl.innerHTML = '<span class="icon">+</span> 加一組';
+      loadWorkouts();
+    }).catch(function(err) {
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<span class="icon">+</span> 加一組';
+    });
   }
 
   async function saveSet() {
@@ -1371,14 +1318,14 @@
       d[m.id + '_1RM'] = document.getElementById(m.id + '_1RM').value;
       d[m.id + '_Added'] = document.getElementById(m.id + '_Added').value;
     });
-    showLoader('儲存設定中...');
+    showLoader('SAVING CONFIGURATION...');
     try {
       const msg = await API.post('saveSettings', { data: d });
       hideLoader(); showAlert(msg);
     } catch(err) { hideLoader(); showAlert('儲存失敗：' + err.message); }
   }
 
-  // ═══════ 日曆 ═══════
+  // ═══════ 日曆 ── 手繪風格 ═══════
   function renderCalendar() {
     const container = document.getElementById('calendarContainer');
     const display = document.getElementById('calMonthDisplay');
@@ -1386,12 +1333,12 @@
     ['日','一','二','三','四','五','六'].forEach(d => container.innerHTML += `<div class="cal-header">${d}</div>`);
 
     const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
-    display.innerText = `${year}/${month + 1}`;
+    display.innerText = `${year} / ${month + 1}`;
     const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
     const todayStr = getLocalDateString(today);
 
-    for(let i=0; i<firstDay; i++) container.innerHTML += `<div class="cal-day bg-light"></div>`;
+    for(let i=0; i<firstDay; i++) container.innerHTML += `<div class="cal-day" style="background:transparent;"></div>`;
     for(let d=1; d<=daysInMonth; d++) {
       let fullDate = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       let event = allEvents[fullDate];
@@ -1399,7 +1346,7 @@
       let moveClass = '';
       if (event) {
         const mv = event.move || '';
-        if (mv.includes('深蹲') || mv.includes('Squat')) moveClass = '';
+        if (mv.includes('深蹲') || mv.includes('Squat')) moveClass = 'move-squat';
         else if (mv.includes('硬舉') || mv.includes('Deadlift')) moveClass = 'move-deadlift';
         else if (mv.includes('肩推') || mv.includes('Press')) moveClass = 'move-press';
         else if (mv.includes('臥推') || mv.includes('Bench')) moveClass = 'move-bench';
@@ -1407,27 +1354,27 @@
       container.innerHTML += `
         <div class="cal-day${isToday}" onclick="goToDate('${fullDate}')">
           <strong class="cal-day-num">${d}</strong>
-          ${event ? `<span class="cal-week-tag">${event.week}</span><div class="cal-event ${moveClass} ${event.done?'cal-done':''}"><b>${event.move.split(' ')[0]}</b><br>${event.maxWeight}kg × ${event.sets}組</div>` : ''}
+          ${event ? `<span class="cal-week-tag">${event.week}</span><div class="cal-event ${moveClass} ${event.done?'cal-done':''}"><b>${event.move.split(' ')[0]}</b><br>${event.maxWeight}kg × ${event.sets} SETS</div>` : ''}
         </div>`;
     }
   }
   function changeMonth(dir) {
-    currentCalDate.setDate(1); // 避免 5/31 → setMonth(5) 溢出到 7/1
+    currentCalDate.setDate(1);
     currentCalDate.setMonth(currentCalDate.getMonth() + dir);
     renderCalendar();
   }
   function goToDate(date) { document.getElementById('targetDate').value = date; showTab('log', document.querySelector('.nav-item')); loadWorkouts(); }
 
-  // ═══════ PR 慶祝 ═══════
+  // ═══════ PR 慶祝 ── 手繪風格 ═══════
   function showPRCelebration(prTypes) {
     const overlay = document.createElement('div');
     overlay.className = 'celebration';
     overlay.innerHTML = `
       <div class="celebration-content">
         <div style="font-size: 52px;">🎉</div>
-        <h4 class="mt-3 mb-2 text-accent fw-bold">恭喜創 PR！</h4>
-        <p class="text-muted-custom">${prTypes.join(' / ')} PR</p>
-        <button class="btn btn-accent w-100 mt-3 py-2" onclick="this.closest('.celebration').remove()">太棒了！</button>
+        <h4 class="mt-3 mb-2 text-accent fw-bold">恭喜創 PR!</h4>
+        <p style="color:var(--text-muted)">${prTypes.join(' / ')} 紀錄</p>
+        <button class="btn btn-accent w-100 mt-3 py-2" onclick="this.closest('.celebration').remove()">太棒了</button>
       </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -1489,9 +1436,9 @@
       if (bestPRs.length > 0) {
         prList.innerHTML = bestPRs.map(pr => `
           <div class="pr-history-item">
-            <strong>${pr.movement}</strong> <span class="mono">${pr.weight}</span>kg × ${pr.reps}
+            <strong>${pr.movement}</strong> <span class="mono" style="color:var(--accent-orange); font-weight:700; font-size:14px;">${pr.weight}kg × ${pr.reps}</span>
             <span class="pr-badge">${pr.type}</span>
-            <div class="text-muted-custom" style="font-size:10px;">${pr.date}</div>
+            <div style="color:var(--text-muted);font-size:10px;">${pr.date}</div>
           </div>`).join('');
       } else {
         prList.innerHTML = '<p class="text-muted-custom small text-center py-2">尚無 PR 紀錄</p>';
@@ -1501,35 +1448,33 @@
 
     } catch(err) {
       hideLoader();
-      console.error('統計載入失敗:', err);
+      console.error('STATS LOAD FAILED:', err);
       statEmpty.style.display = 'block';
-      statEmpty.innerHTML = `<p class="mb-0 text-accent">載入失敗：${err.message}</p>`;
+      statEmpty.innerHTML = `<p class="mb-0 text-accent">載入失敗: ${err.message}</p>`;
     }
   }
 
   // ═══════ ChartService — deep module ═══════
-  // Interface: renderTrendChart(canvasId, data, title, beginAtZero), renderBodyweight(canvasId, data)
-  // Implementation hides: Chart.js config template, instance lifecycle, color mapping
-
+  // Updated for hand-drawn style - white bg with charcoal text
   const ChartService = {
-    _colors: { '深蹲 Squat': '#1565C0', '肩推 Press': '#2E7D32', '硬舉 Deadlift': '#E65100', '臥推 Bench': '#AD1457' },
+    _colors: { '深蹲 Squat': '#6B8C42', '肩推 Press': '#C69C3D', '硬舉 Deadlift': '#E74C3C', '臥推 Bench': '#9B59B6' },
     _movementOrder: ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'],
     _chartOptions: {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        title: { display: true, font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
-        legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Noto Sans TC', sans-serif" } } },
+        title: { display: true, font: { size: 13, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
+        legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Libre Baskerville', serif" }, color: '#2C2C2C' } },
         tooltip: {
-          backgroundColor: 'rgba(27,42,74,0.9)',
-          titleFont: { family: "'IBM Plex Mono', monospace" },
-          bodyFont: { family: "'IBM Plex Mono', monospace" },
-          cornerRadius: 8, padding: 10
+          backgroundColor: 'rgba(44, 44, 44, 0.95)',
+          titleFont: { family: "'Share Tech Mono', monospace", color: '#FFFFFF' },
+          bodyFont: { family: "'Share Tech Mono', monospace", color: '#FFFFFF' },
+          cornerRadius: 8, padding: 10, borderColor: '#D4C4A8', borderWidth: 1
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D', maxRotation: 45 }, border: { display: false } },
-        y: { grid: { color: 'rgba(27,42,74,0.06)' }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' }, border: { display: false } }
+        x: { grid: { display: false }, ticks: { font: { size: 10, family: "'Share Tech Mono', monospace" }, color: '#2C2C2C', maxRotation: 45 }, border: { display: false, color: '#D4C4A8' } },
+        y: { grid: { color: 'rgba(212, 196, 168, 0.3)' }, ticks: { font: { size: 10, family: "'Share Tech Mono', monospace" }, color: '#2C2C2C' }, border: { display: false, color: '#D4C4A8' } }
       }
     },
 
@@ -1560,16 +1505,34 @@
       if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
       const { datasets, sortedDates } = this._buildDatasets(trends);
+
+      // Deep clone _chartOptions to avoid mutation
+      const baseOptions = JSON.parse(JSON.stringify(this._chartOptions));
+
       chartInstances[canvasId] = new Chart(ctx, {
         type: 'line',
         data: { datasets: datasets },
-        options: Object.assign({}, this._chartOptions, {
-          plugins: Object.assign({}, this._chartOptions.plugins, { title: { display: true, text: title, font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } } }),
-          scales: Object.assign({}, this._chartOptions.scales, {
-            x: Object.assign({}, this._chartOptions.scales.x, { type: 'category', labels: sortedDates }),
-            y: Object.assign({}, this._chartOptions.scales.y, { beginAtZero: beginAtZero })
-          })
-        })
+        options: {
+          ...baseOptions,
+          plugins: {
+            ...baseOptions.plugins,
+            title: { display: true, text: title, font: { size: 13, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
+            legend: { labels: { usePointStyle: true, padding: 16, font: { size: 11, family: "'Libre Baskerville', serif" }, color: '#2C2C2C' } }
+          },
+          scales: {
+            x: {
+              ...baseOptions.scales.x,
+              type: 'category',
+              labels: sortedDates,
+              ticks: { ...baseOptions.scales.x.ticks, color: '#2C2C2C' }
+            },
+            y: {
+              ...baseOptions.scales.y,
+              beginAtZero: beginAtZero,
+              ticks: { ...baseOptions.scales.y.ticks, color: '#2C2C2C' }
+            }
+          }
+        }
       });
     },
 
@@ -1584,21 +1547,31 @@
           labels: sorted.map(d => d.date.slice(5)),
           datasets: [{
             label: '體重 (kg)', data: sorted.map(d => d.weight),
-            borderColor: '#00796B', backgroundColor: 'rgba(0,121,107,0.08)',
+            borderColor: '#6B8C42', backgroundColor: 'rgba(107, 140, 66, 0.1)',
             fill: true, tension: 0.3,
             pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5
           }]
         },
-        options: Object.assign({}, this._chartOptions, {
-          plugins: Object.assign({}, this._chartOptions.plugins, {
-            title: { display: true, text: '體重趨勢', font: { size: 13, weight: '700', family: "'Noto Sans TC', sans-serif" } },
+        options: {
+          ...this._chartOptions,
+          plugins: {
+            ...this._chartOptions.plugins,
+            title: { display: true, text: '體重趨勢', font: { size: 13, weight: '700', family: "'Libre Baskerville', serif" }, color: '#2C2C2C' },
             legend: { display: false }
-          }),
+          },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' }, border: { display: false } },
-            y: { grid: { color: 'rgba(27,42,74,0.06)' }, ticks: { font: { size: 10, family: "'IBM Plex Mono', monospace" }, color: '#6B7B8D' }, border: { display: false } }
+            x: {
+              ...this._chartOptions.scales.x,
+              grid: { display: false },
+              ticks: { ...this._chartOptions.scales.x.ticks, color: '#2C2C2C', border: { display: false } }
+            },
+            y: {
+              ...this._chartOptions.scales.y,
+              grid: { color: 'rgba(212, 196, 168, 0.3)' },
+              ticks: { ...this._chartOptions.scales.y.ticks, color: '#2C2C2C', border: { display: false } }
+            }
           }
-        })
+        }
       });
     }
   };
@@ -1641,7 +1614,7 @@
       document.getElementById('confirmPwd').value = '';
     } catch(err) {
       hideLoader();
-      showAlert('密碼更新失敗：' + err.message);
+      showAlert('密碼更新失敗: ' + err.message);
     }
   }
 
@@ -1652,7 +1625,6 @@
   }
 
   // 本地日期字串 (yyyy-MM-dd)，避免 toISOString() 回傳 UTC 日期
-  // 不傳參數 → 當天，傳 Date 物件 → 該日期
   function getLocalDateString(d) {
     const date = d || new Date();
     return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
@@ -1662,12 +1634,12 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js?v=31', { scope: './' })
-        .then((reg) => { console.log('SW registered:', reg.scope); })
-        .catch((err) => { console.log('SW registration failed:', err); });
+        .then((reg) => { console.log('SW 已註冊:', reg.scope); })
+        .catch((err) => { console.log('SW 註冊失敗:', err); });
     });
   }
 
-  // ═══════ PWA 安裝提示 ═══════
+  // ═══════ PWA 安裝提示 ── 手繪風格 ═══════
   let deferredPrompt = null;
 
   window.addEventListener('beforeinstallprompt', (e) => {
@@ -1677,11 +1649,11 @@
       if (!document.querySelector('#installBanner')) {
         const banner = document.createElement('div');
         banner.id = 'installBanner';
-        banner.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:12px 20px;border-radius:12px;z-index:9998;box-shadow:0 4px 20px rgba(27,42,74,0.3);font-size:13px;display:flex;align-items:center;gap:10px;max-width:90%;font-family:"Noto Sans TC",sans-serif;';
+        banner.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent-orange);color:#FFFFFF;padding:12px 20px;border-radius:12px;z-index:9998;box-shadow:4px 4px 12px rgba(217,87,40,0.3);font-size:13px;display:flex;align-items:center;gap:10px;max-width:90%;font-family:"Libre Baskerville",serif;';
         banner.innerHTML = `
           <span>📲 新增至主畫面，快速開啟課表</span>
-          <button id="installBtn" class="btn btn-sm" style="background:#fff;color:var(--navy);font-weight:700;border:none;padding:4px 14px;border-radius:8px;">安裝</button>
-          <button id="installClose" style="background:none;border:none;color:#fff;font-size:18px;padding:4px 8px;">✕</button>`;
+          <button id="installBtn" class="btn btn-sm" style="background:#FFFFFF;color:var(--accent-orange);font-weight:700;border:2px solid var(--accent-orange);padding:4px 14px;border-radius:8px;">安裝</button>
+          <button id="installClose" style="background:none;border:none;color:#FFFFFF;font-size:18px;padding:4px 8px;cursor:pointer;">✕</button>`;
         document.body.appendChild(banner);
 
         document.getElementById('installBtn').addEventListener('click', async () => {
@@ -1690,7 +1662,7 @@
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             deferredPrompt = null;
-            console.log('Install outcome:', outcome);
+            console.log('安裝結果:', outcome);
           }
         });
 
