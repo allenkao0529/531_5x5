@@ -1298,6 +1298,12 @@
     if (result.pr && result.pr.length > 0) {
       showPRCelebration(result.pr);
     }
+
+    // 檢查是否是 Set 3 且已儲存，若是則動態生成「加一組」按鈕
+    var setStr = String(set || '').trim();
+    if (setStr === 'Set 3' && !card.querySelector('.add-extra-btn')) {
+      card.insertAdjacentHTML('beforeend', `<button class="add-extra-btn" data-date="${d}" data-movement="${m}" data-extra-count="0" onclick="doAddExtraSet('${d}','${m}',this,'${aw}','${ar}')"><span class="icon">+</span> 加一組 (剩 5 組)</button>`);
+    }
   }
 
   // ── 為 Set 3 追加一組 ──
