@@ -1116,7 +1116,7 @@
       
       if (isAirBike) {
         planHtml = `目標：<strong>${item.targetReps}</strong>`;
-        weightLabel = '平均瓦特/轉速';
+        weightLabel = '平均速度';
         repsLabel = '消耗卡路里';
       } else {
         planHtml = item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span style="font-size:12px; color: var(--extra-border); font-weight: 700;">⚡ 追加組 — 無原訂重量/次數</span>';
@@ -1672,7 +1672,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=34', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=35', { scope: './' })
         .then((reg) => { console.log('SW 已註冊:', reg.scope); })
         .catch((err) => { console.log('SW 註冊失敗:', err); });
     });
