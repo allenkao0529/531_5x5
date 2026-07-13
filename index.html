@@ -1050,9 +1050,13 @@
     const pwdInput = document.getElementById('loginPwd').value;
     if(!pwdInput) return showAlert('請輸入密碼');
 
+    // 重新設定 targetDate 為當前的今天，防止登入畫面掛在背景過期
+    const todayStr = getLocalDateString();
+    document.getElementById('targetDate').value = todayStr;
+
     showLoader('驗證並載入資料中 (約需 2~3 秒)...');
     sessionPwd = pwdInput;
-    const targetDate = document.getElementById('targetDate').value || getLocalDateString();
+    const targetDate = todayStr;
 
     try {
       const initData = await API.post('initLoad', { targetDate: targetDate });
@@ -1096,16 +1100,17 @@
         html += `<div class="warmup-block"><div class="warmup-label">🔥 暖身組</div><div class="warmup-detail">${item.warmupWeight}</div></div>`;
       }
 
-      // 判斷是否為追加組
+      // 判斷是否為追加組 (Week 4 降載週不允許追加)
       var setStr = String(item.set || '').trim();  // 移除前後空白
-      var isSet3 = setStr === 'Set 3';
+      var isWeek4 = String(item.week || '').includes('Week 4');
+      var isSet3 = setStr === 'Set 3' && !isWeek4;
       var isExtra = setStr.startsWith('Set 3') && setStr.length > 5;
 
       // 調試信息
       console.log('Workout Item:', item.movement, '| Set:', item.set, '| Trimmed:', setStr, '| isExtra:', isExtra, '| length:', setStr.length);
 
       html += `
-        <div class="workout-card${isExtra ? ' extra-set' : ''}" data-set="${setStr}" data-isextra="${isExtra}">
+        <div class="workout-card${isExtra ? ' extra-set' : ''}" data-set="${setStr}" data-isextra="${isExtra}" data-week="${item.week}">
           <div class="workout-card-header">
             <span class="workout-move-name">${item.movement}${isExtra ? '<span class="extra-label">⚡ 追加組</span>' : ''}</span>
             <span class="workout-set-badge mono">${setStr}${isExtra ? '<span class="extra-badge">追加</span>' : ''}</span>
@@ -1299,9 +1304,11 @@
       showPRCelebration(result.pr);
     }
 
-    // 檢查是否是 Set 3 且已儲存，若是則動態生成「加一組」按鈕
+    // 檢查是否是 Set 3 且已儲存，若是則動態生成「加一組」按鈕 (Week 4 降載週排除)
     var setStr = String(set || '').trim();
-    if (setStr === 'Set 3' && !card.querySelector('.add-extra-btn')) {
+    var week = card.getAttribute('data-week') || '';
+    var isWeek4 = week.includes('Week 4');
+    if (setStr === 'Set 3' && !isWeek4 && !card.querySelector('.add-extra-btn')) {
       card.insertAdjacentHTML('beforeend', `<button class="add-extra-btn" data-date="${d}" data-movement="${m}" data-extra-count="0" onclick="doAddExtraSet('${d}','${m}',this,'${aw}','${ar}')"><span class="icon">+</span> 加一組 (剩 5 組)</button>`);
     }
   }
@@ -1652,7 +1659,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=31', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=32', { scope: './' })
         .then((reg) => { console.log('SW 已註冊:', reg.scope); })
         .catch((err) => { console.log('SW 註冊失敗:', err); });
     });
