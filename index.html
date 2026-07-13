@@ -1134,11 +1134,11 @@
           <div class="workout-inputs">
             <div class="workout-input-group" style="flex:1.5;">
               <label>${weightLabel}</label>
-              <input type="text" id="aw-${i}" class="mono" value="${item.actualWeight === item.targetWeight ? '' : item.actualWeight}" placeholder="${isAirBike ? 'RPM 或 W' : 'kg'}">
+              <input type="text" id="aw-${i}" class="mono" value="${item.actualWeight}" placeholder="${isAirBike ? 'RPM 或 W' : 'kg'}">
             </div>
             <div class="workout-input-group" style="flex:1;">
               <label>${repsLabel}</label>
-              <input type="text" id="ar-${i}" class="mono" value="${item.actualReps === item.targetReps ? '' : item.actualReps.replace('+','')}" placeholder="${isAirBike ? 'kcal' : 'reps'}">
+              <input type="text" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}" placeholder="${isAirBike ? 'kcal' : 'reps'}">
             </div>
             <div class="workout-input-group" style="flex:4.5;">
               <label>&nbsp;</label>
@@ -1672,7 +1672,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=33', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=34', { scope: './' })
         .then((reg) => { console.log('SW 已註冊:', reg.scope); })
         .catch((err) => { console.log('SW 註冊失敗:', err); });
     });
