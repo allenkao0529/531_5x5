@@ -1105,9 +1105,22 @@
       var isWeek4 = String(item.week || '').includes('Week 4');
       var isSet3 = setStr === 'Set 3' && !isWeek4;
       var isExtra = setStr.startsWith('Set 3') && setStr.length > 5;
+      var isAirBike = item.movement === '風扇車 Air Bike';
 
       // 調試信息
       console.log('Workout Item:', item.movement, '| Set:', item.set, '| Trimmed:', setStr, '| isExtra:', isExtra, '| length:', setStr.length);
+
+      let planHtml = '';
+      let weightLabel = '重量';
+      let repsLabel = '次數';
+      
+      if (isAirBike) {
+        planHtml = `目標：<strong>${item.targetReps}</strong>`;
+        weightLabel = '平均瓦特/轉速';
+        repsLabel = '消耗卡路里';
+      } else {
+        planHtml = item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span style="font-size:12px; color: var(--extra-border); font-weight: 700;">⚡ 追加組 — 無原訂重量/次數</span>';
+      }
 
       html += `
         <div class="workout-card${isExtra ? ' extra-set' : ''}" data-set="${setStr}" data-isextra="${isExtra}" data-week="${item.week}">
@@ -1116,23 +1129,23 @@
             <span class="workout-set-badge mono">${setStr}${isExtra ? '<span class="extra-badge">追加</span>' : ''}</span>
           </div>
           <div class="workout-plan">
-            ${item.targetWeight ? '原訂 <strong>' + item.targetWeight + 'kg × ' + item.targetReps + '</strong> <span class="text-muted-custom" style="font-size:11px;">(' + item.percent + ')</span>' : '<span style="font-size:12px; color: var(--extra-border); font-weight: 700;">⚡ 追加組 — 無原訂重量/次數</span>'}
+            ${planHtml}
           </div>
           <div class="workout-inputs">
             <div class="workout-input-group" style="flex:1.5;">
-              <label>重量</label>
-              <input type="number" id="aw-${i}" class="mono" value="${item.actualWeight}">
+              <label>${weightLabel}</label>
+              <input type="text" id="aw-${i}" class="mono" value="${item.actualWeight === item.targetWeight ? '' : item.actualWeight}" placeholder="${isAirBike ? 'RPM 或 W' : 'kg'}">
             </div>
             <div class="workout-input-group" style="flex:1;">
-              <label>次數</label>
-              <input type="number" id="ar-${i}" class="mono" value="${item.actualReps.replace('+','')}">
+              <label>${repsLabel}</label>
+              <input type="text" id="ar-${i}" class="mono" value="${item.actualReps === item.targetReps ? '' : item.actualReps.replace('+','')}" placeholder="${isAirBike ? 'kcal' : 'reps'}">
             </div>
             <div class="workout-input-group" style="flex:4.5;">
               <label>&nbsp;</label>
               <button id="btn-${i}" class="workout-btn ${item.isLogged === 'V' ? 'btn-done' : 'btn-log'}" onclick="doLog(${i}, '${item.rowIdx}', '${item.date}', '${item.movement}', '${item.set}')">${item.isLogged === 'V' ? '✅ 已儲存' : 'OK'}</button>
             </div>
           </div>
-          ${item.isLogged === 'V' ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${item.est1RM > 0 ? Math.round(item.est1RM) : '-'}</strong> kg</span></div>` : ''}
+          ${item.isLogged === 'V' && !isAirBike ? `<div class="est-1rm-display">📐 估算 1RM: <span class="mono"><strong>${item.est1RM > 0 ? Math.round(item.est1RM) : '-'}</strong> kg</span></div>` : ''}
                    ${isSet3 && item.isLogged === 'V' ? '<button class="add-extra-btn" data-date="' + item.date + '" data-movement="' + item.movement + '" onclick="doAddExtraSet(\'' + item.date + '\',\'' + item.movement + '\',this,\'' + item.actualWeight + '\',\'' + item.actualReps + '\')"><span class="icon">+</span> 加一組</button>' : ''}
         </div>`;
     });
@@ -1291,7 +1304,7 @@
     btn.innerText = '✅ 已儲存';
     btn.disabled = false;
 
-    if (result.est1RM && result.est1RM > 0) {
+    if (result.est1RM && result.est1RM > 0 && m !== '風扇車 Air Bike') {
       const est1RMEl = card.querySelector('.est-1rm-display');
       if (est1RMEl) {
         est1RMEl.innerHTML = `📐 估算 1RM: <span class="mono"><strong>${Math.round(result.est1RM)}</strong> kg</span>`;
@@ -1659,7 +1672,7 @@
   // ═══════ PWA Service Worker ═══════
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=32', { scope: './' })
+      navigator.serviceWorker.register('./sw.js?v=33', { scope: './' })
         .then((reg) => { console.log('SW 已註冊:', reg.scope); })
         .catch((err) => { console.log('SW 註冊失敗:', err); });
     });
