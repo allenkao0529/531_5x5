@@ -65,11 +65,10 @@ const CACHE = {
 
   clearAll: function() {
     var cache = this._getCache();
-    var keys = cache.getAll();
-    for (var key in keys) {
-      if (keys.hasOwnProperty(key)) cache.remove(key);
-    }
-    Logger.log("所有快取已清除（包含 " + Object.keys(keys).length + " 筆）");
+    cache.remove('raw_data');
+    cache.remove('all_events');
+    cache.remove('settings');
+    Logger.log("常駐快取已清除");
   }
 };
 
@@ -434,6 +433,81 @@ function generateProgram(startDateStr, isIncrement, tmRatio, progType) {
         }
         newRows.push([dateStr, `Week ${w+1} (${typeLabel})`, move, `Set ${s+1}`, weight, scheme.reps[s], percentStr, '', '', '', warmupW, warmupR]);
       }
+
+      // 🚀 新增：肩推突破專項補強動作 (排在主動作後、風扇車前)
+      // 週二(d=1, 肩推日) 與 週四(d=3, 臥推日)
+      if (w < 3) { // Week 1 ~ Week 3 衝刺週
+        if (d === 1) { // 週二：肩推日補強
+          // 1. Z-Press 地板肩推 (3組)
+          for (let zs = 1; zs <= 3; zs++) {
+            newRows.push([dateStr, `Week ${w+1} (${typeLabel})`, 'Z-Press (地板肩推)', `Set ${zs}`, '20', zs === 3 ? '6-8' : '8', '補強', '', '20', zs === 3 ? '8' : '8', '', '']);
+          }
+          // 2. 面拉 Face Pull (3組)
+          for (let fs = 1; fs <= 3; fs++) {
+            newRows.push([dateStr, `Week ${w+1} (${typeLabel})`, '面拉 Face Pull', `Set ${fs}`, '15', '15-20', '輔助', '', '15', '15', '', '']);
+          }
+        } else if (d === 3) { // 週四：臥推日補強 (大重量三頭鎖定 + 累積肩部容積)
+          // 1. 窄距臥推 CGBP (3組)
+          for (let cs = 1; cs <= 3; cs++) {
+            newRows.push([dateStr, `Week ${w+1} (${typeLabel})`, '窄距臥推 CGBP', `Set ${cs}`, '40', cs === 3 ? '6-8' : '8', '補強', '', '40', cs === 3 ? '8' : '8', '', '']);
+          }
+          // 2. 啞鈴肩推 DB Press (3組)
+          for (let ds = 1; ds <= 3; ds++) {
+            newRows.push([dateStr, `Week ${w+1} (${typeLabel})`, '啞鈴肩推 DB Press', `Set ${ds}`, '10', ds === 3 ? '8-10' : '10', '輔助', '', '10', ds === 3 ? '10' : '10', '', '']);
+          }
+        }
+      } else if (w === 3) { // Week 4 (Deload 降載週)：降低總量，只保留輕量關節保養
+        if (d === 1) {
+          // 僅保留輕量面拉 2 組
+          for (let fs = 1; fs <= 2; fs++) {
+            newRows.push([dateStr, `Week ${w+1} (${typeLabel})`, '面拉 Face Pull', `Set ${fs}`, '15', '15', '保養', '', '15', '15', '', '']);
+          }
+        }
+      }
+
+      // 根據週數(w)與天數(d)決定風扇車課表參數並加入
+      // 週一(0)=深蹲, 週二(1)=肩推, 週三(2)=硬舉, 週四(3)=臥推
+      let bikeSet = '';
+      let bikeTargetReps = '';
+
+      if (w === 0) { // Week 1
+        if (d === 0) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 15 分鐘'; }
+        else if (d === 1) { bikeSet = '課表 B (Tabata)'; bikeTargetReps = '8 組 (20s衝 / 10s休)'; }
+        else if (d === 2) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 12 分鐘'; }
+        else if (d === 3) { bikeSet = '課表 C (30/30)'; bikeTargetReps = '12 組 (30s衝 / 30s休)'; }
+      } else if (w === 1) { // Week 2
+        if (d === 0) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 12 分鐘'; }
+        else if (d === 1) { bikeSet = '課表 B (Tabata)'; bikeTargetReps = '8 組 (20s衝 / 10s休)'; }
+        else if (d === 2) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 10 分鐘'; }
+        else if (d === 3) { bikeSet = '課表 C (30/30)'; bikeTargetReps = '8 組 (30s衝 / 30s休)'; }
+      } else if (w === 2) { // Week 3 (極高疲勞週)
+        if (d === 0) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 8 分鐘'; }
+        else if (d === 1) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 10 分鐘'; }
+        else if (d === 2) { bikeSet = ''; bikeTargetReps = ''; } // 週三硬舉日不踩，直接休息
+        else if (d === 3) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 10 分鐘'; }
+      } else if (w === 3) { // Week 4 (Deload 降載週)
+        if (d === 0) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 8-10 分鐘'; }
+        else if (d === 1) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 8-10 分鐘'; }
+        else if (d === 2) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 8-10 分鐘'; }
+        else if (d === 3) { bikeSet = '課表 A (LISS)'; bikeTargetReps = '輕鬆踩 8-10 分鐘'; }
+      }
+
+      if (bikeSet !== '') {
+        newRows.push([
+          dateStr, 
+          `Week ${w+1} (${typeLabel})`, 
+          '風扇車 Air Bike', 
+          bikeSet, 
+          '', // targetWeight
+          bikeTargetReps, 
+          '', // percent
+          '', // isLogged
+          '', // actualWeight
+          '', // actualReps
+          '', // warmupWeight
+          ''  // warmupReps
+        ]);
+      }
     }
   }
 
@@ -468,15 +542,21 @@ function generateProgram(startDateStr, isIncrement, tmRatio, progType) {
     programSheet.getRange(2, 1, finalData.length, 12).setValues(finalData);
   }
 
-  // 🚀 清除課表快取
-  _invalidateProgramCaches();
+  // 🚀 清除課表快取 (傳入這 28 天的日期以移除對應的當天課表快取)
+  _invalidateProgramCaches(Array.from(targetDatesSet));
 
   return "新週期課表已生成！（已自動覆寫衝突日期並完成排序）";
 }
 
 // 清除課表快取
-function _invalidateProgramCaches() {
-  CACHE.invalidate('generateProgram');
+function _invalidateProgramCaches(datesArray) {
+  CACHE.clearAll();
+  if (datesArray && datesArray.length > 0) {
+    var cache = CACHE._getCache();
+    for (var i = 0; i < datesArray.length; i++) {
+      cache.remove('prog_' + datesArray[i]);
+    }
+  }
 }
 
 function getProgramByDate(targetDate) {
@@ -567,9 +647,12 @@ function logWorkout(logData) {
   // Set 3 = 原訂，Set 3A/3B/3C... = 追加組
   var isExtra = set.indexOf('Set 3') === 0 && set.length > 6;
 
+  // 格式化時間戳記為一致的格式
+  var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
   if (isExtra) {
     // 追加組：一律新增一筆 Workout_Log（不覆蓋前一組）
-    logSheet.appendRow([new Date(), dateStr, move, actW, actR, '', est1RM]);
+    logSheet.appendRow([timestamp, dateStr, move, actW, actR, '', est1RM]);
   } else {
     // 原訂組：更新最後一筆同日期/動作的紀錄（不新增重複）
     const logRows = logSheet.getDataRange().getValues();
@@ -583,7 +666,7 @@ function logWorkout(logData) {
     if (lastLogIdx >= 0) {
       logSheet.getRange(lastLogIdx + 1, 4, 1, 3).setValues([[actW, actR, est1RM]]);
     } else {
-      logSheet.appendRow([new Date(), dateStr, move, actW, actR, '', est1RM]);
+      logSheet.appendRow([timestamp, dateStr, move, actW, actR, '', est1RM]);
     }
   }
 
@@ -632,27 +715,59 @@ function addExtraSet(logData) {
   var hasSet3 = false; // 是否有原訂 Set 3
   var maxLetterIdx = -1; // 追加組字母：A=0, B=1, C=2...
   var extraCount = 0;
-  for (var i = progData.length - 1; i >= 1; i--) {
+  // 先收集所有同日期/動作的 Set 3 相關項目
+  var set3Items = [];
+  for (var i = 1; i < progData.length; i++) {
     var r = progData[i];
     var setStr = String(r[3]);
-    if (DateUtil.formatDate(r[0]) === dateStr && String(r[2]) === move && setStr.indexOf('Set 3') === 0) {
-      if (setStr === 'Set 3') {
-        hasSet3 = true;
-        lastSet3Data = r;
-      } else if (setStr.length > 6) {
-        // 追加組：Set 3A, 3B, 3C...
-        var letter = setStr.charCodeAt(setStr.length - 1) - 65; // A=0, B=1, C=2...
+    var trimmedSetStr = setStr.trim();
+    // 只匹配 'Set 3' 或 'Set 3X' 格式（X 為大寫字母），支援有無空格
+    var prefix = trimmedSetStr.startsWith('Set 3') ? 'Set 3' : (trimmedSetStr.startsWith('Set3') ? 'Set3' : null);
+    var isSet3 = trimmedSetStr === 'Set 3' || (prefix !== null && trimmedSetStr.length > prefix.length && trimmedSetStr.charCodeAt(trimmedSetStr.length - 1) >= 65 && trimmedSetStr.charCodeAt(trimmedSetStr.length - 1) <= 90);
+    if (DateUtil.formatDate(r[0]) === dateStr && String(r[2]) === move && isSet3) {
+      set3Items.push({ idx: i, row: r, setStr: setStr, trimmed: trimmedSetStr });
+    }
+  }
+  // 先找出所有追加組的最大字母索引（不影響 lastSet3Data）
+  for (var j = set3Items.length - 1; j >= 0; j--) {
+    var item = set3Items[j];
+    var setStr = item.setStr;
+    // 追加組：Set 3A, 3B, 3C... (非 'Set 3' 且以 'Set 3' 開頭，且最後一個字元是大寫字母)
+    // 使用 trim() 移除可能的空白字符
+    var trimmedSetStr = setStr.trim();
+    // 支援 'Set 3' 和 'Set3' 格式（有無空格）
+    var prefix = trimmedSetStr.startsWith('Set 3') ? 'Set 3' : (trimmedSetStr.startsWith('Set3') ? 'Set3' : null);
+    if (trimmedSetStr !== 'Set 3' && prefix !== null && trimmedSetStr.length > prefix.length) {
+      var lastChar = trimmedSetStr.charCodeAt(trimmedSetStr.length - 1);
+      // 檢查最後一個字元是否為大寫字母 (A=65, Z=90)
+      if (lastChar >= 65 && lastChar <= 90) {
+        var letter = lastChar - 65; // A=0, B=1, C=2...
         if (letter > maxLetterIdx) {
           maxLetterIdx = letter;
-          lastSet3Data = r;
         }
         extraCount++;
       }
     }
   }
+  // 再找原訂 Set 3（如果有）
+  for (var j = set3Items.length - 1; j >= 0; j--) {
+    var item = set3Items[j];
+    var setStr = item.setStr.trim();
+    if (setStr === 'Set 3') {
+      hasSet3 = true;
+      lastSet3Data = item.row;
+      break; // 找到就停止
+    }
+  }
 
   if (!hasSet3) {
     throw new Error('找不到該日期的 Set 3。請確認課表已生成且該日期/動作存在 Set 3。');
+  }
+
+  // 阻擋 Week 4 降載週追加組
+  var weekStr = String(lastSet3Data[1] || '');
+  if (weekStr.indexOf('Week 4') >= 0) {
+    throw new Error('降載週 (Week 4) 不允許追加組');
   }
 
   // 限制最多 5 組追加（3D/3E/3F/3G/3H）
@@ -664,9 +779,9 @@ function addExtraSet(logData) {
   var nextLetter = String.fromCharCode(65 + maxLetterIdx + 1); // C=2 -> next = D
   var nextSet = 'Set 3' + nextLetter;
 
-  // 從最後一組 Set 3 複製資料，填入新的重量/次數
+  // 從最後一組 Set 3 複製資料，填入新的重量/次數（使用格式化日期保持一致）
   var newRow = [
-    lastSet3Data[0],   // date
+    DateUtil.formatDate(lastSet3Data[0]),   // date (格式化為 yyyy-MM-dd)
     lastSet3Data[1],   // week
     lastSet3Data[2],   // movement
     nextSet,           // set (3D/3E/...)
@@ -686,36 +801,71 @@ function addExtraSet(logData) {
   // 計算估算 1RM
   var est1RM = Compute.est1RM(actW, actR);
 
-  // 寫入 Workout_Log
-  logSheet.appendRow([new Date(), dateStr, move, actW, actR, '', est1RM]);
+  // 寫入 Workout_Log（使用格式化日期保持一致）
+  var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  logSheet.appendRow([timestamp, dateStr, move, actW, actR, '', est1RM]);
 
   // 檢查是否創 PR
   var prTypes = checkAndRecordPR(dateStr, move, actW, actR);
 
   // 🚀 寫入後清除相關快取
   CACHE.invalidate('writeWorkout', { date: dateStr });
+  // 清除 prog_ 快取，確保 getProgramByDate() 返回最新數據
+  var progCacheKey = 'prog_' + dateStr;
+  CACHE._getCache().remove(progCacheKey);
 
   return { message: '已新增 ' + nextSet, est1RM: est1RM, pr: prTypes, nextSet: nextSet };
 }
 
 // 檢查並記錄 PR，回傳創下的 PR 類型
 function checkAndRecordPR(dateStr, move, weight, reps) {
-  const prSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('PR_Log');
-  if (!prSheet) return [];
+  // 只在重訓四大動作進行 PR 檢測，排除風扇車等輔助訓練
+  const targetMoves = ['深蹲 Squat', '肩推 Press', '硬舉 Deadlift', '臥推 Bench'];
+  if (targetMoves.indexOf(move) < 0) {
+    return [];
+  }
 
-  const prData = prSheet.getDataRange().getValues();
+  const prSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('PR_Log');
+  const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Workout_Log');
+
+  // 從 PR_Log 讀取歷史最佳數據
   let bestWeight = 0;
   let bestReps = 0;
   let bestVolume = 0;
 
-  for (let i = 1; i < prData.length; i++) {
-    if (String(prData[i][1]) === move) {
-      const w = Number(prData[i][2]);
-      const r = Number(prData[i][3]);
-      if (w > bestWeight) bestWeight = w;
-      if (r > bestReps) bestReps = r;
-      const vol = w * r;
-      if (vol > bestVolume) bestVolume = vol;
+  if (prSheet) {
+    const prData = prSheet.getDataRange().getValues();
+    for (let i = 1; i < prData.length; i++) {
+      if (String(prData[i][1]) === move) {
+        const w = Number(prData[i][2]);
+        const r = Number(prData[i][3]);
+        if (w > bestWeight) bestWeight = w;
+        if (r > bestReps) bestReps = r;
+        const vol = w * r;
+        if (vol > bestVolume) bestVolume = vol;
+      }
+    }
+  }
+
+  // 從 Workout_Log 讀取同動作的所有紀錄，找出最佳數據（包含追加組）
+  // 注意：需要排除當前這筆（因為剛寫入，比較時不應與自己比較）
+  if (logSheet) {
+    const logData = logSheet.getDataRange().getValues();
+    for (let i = 1; i < logData.length; i++) {
+      if (String(logData[i][2]) === move) {
+        const w = Number(logData[i][3]);
+        const r = Number(logData[i][4]);
+        if (w > 0 && r > 0) {
+          // 略過當前這筆（與 weight/reps 完全相同且日期相同）
+          if (DateUtil.formatDate(logData[i][1]) === dateStr && w === weight && r === reps) {
+            continue;
+          }
+          if (w > bestWeight) bestWeight = w;
+          if (r > bestReps) bestReps = r;
+          const vol = w * r;
+          if (vol > bestVolume) bestVolume = vol;
+        }
+      }
     }
   }
 
